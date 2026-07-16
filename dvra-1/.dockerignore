@@ -3,5 +3,5 @@ target/
 **/target/
 **/fuzz/target/
 dist/
-damn-vulnerable-rust.tar.gz
-dvra-1.zip
+*.tar.gz
+*.zip

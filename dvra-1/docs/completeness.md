@@ -33,13 +33,11 @@ The instructor oracle tracks 22 review cases across these themes:
 ## Deliberate non-goals
 
 - `dvra-1` is not a live web service.
-- It does not need the multi-crate application architecture of `dvra-2`.
+- It does not need a multi-service or multi-crate application architecture.
 - Optional fuzz, Miri, sanitizer, and FFI gates are not part of the default
   quick test because they depend on host tooling.
 - UB-bearing demonstrations are kept out of the ordinary test gate when they
   can abort on allocator/runtime differences.
-- The legacy `damn-vulnerable-rust.tar.gz` is retained for provenance, but it
-  is not the learner-safe distribution artifact.
 
 ## Completion gate
 

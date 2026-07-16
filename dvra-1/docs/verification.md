@@ -77,8 +77,8 @@ Then run:
 ./tools/dvra1 audit
 ```
 
-The legacy `damn-vulnerable-rust.tar.gz` includes instructor truth and is kept
-only for provenance. Do not distribute it to learners.
+The generated learner bundle is the distribution artifact. Do not distribute
+`instructor-oracle/` or any local import/archive artifacts to learners.
 
 ## Docker gates
 
