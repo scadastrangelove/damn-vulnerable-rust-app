@@ -22,10 +22,9 @@ pub fn handle(app: &App, req: &Request) -> Response {
 /// A safer resolution: reject any name that is absolute or contains parent
 /// (`..`) components, then confirm the lexical result stays within `base`.
 ///
-/// NOTE (see ANSWER_KEY): even this is not fully safe against symlinks or a
-/// TOCTOU race between the check and a later open(); the robust fix is to never
-/// use the client name for the path at all and store under a generated id
-/// (see `features::upload::fixed_store`).
+/// NOTE: even this is not fully safe against symlinks or a TOCTOU race between
+/// the check and a later open(); a robust design should avoid using the client
+/// name as the storage path and store under a generated id instead.
 pub fn fixed_handle(app: &App, req: &Request) -> Response {
     let name = req.query_get("name").unwrap_or("");
     let base = Path::new(&app.config.upload_dir);

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import pathlib
-import re
 import sys
 import tomllib
 
@@ -19,23 +18,9 @@ REQUIRED = [
     "crates/bundle/src/lib.rs",
     "crates/unsafe-cache/src/lib.rs",
     "fuzz/fuzz_targets/differential_parser.rs",
-    "instructor-oracle/scenarios.yaml",
     "infrastructure/compose.yaml",
     "infrastructure/compose.ssrf.yaml",
 ]
-
-EXPECTED_IDS = {
-    "DVRA-001",
-    "DVRA-002",
-    "DVRA-003",
-    "DVRA-004",
-    "DVRA-005",
-    "DVRA-006A",
-    "DVRA-006B",
-    "DVRA-007",
-    "DVRA-008",
-    "DVRA-009",
-}
 
 EXPECTED_PUBLIC_FILES = {
     "DVRA-001.md",
@@ -74,21 +59,9 @@ def main() -> int:
             return 1
         package_names.add(package_name)
 
-    seed = (ROOT / "fuzz/corpus/differential_parser/escape_before_second_record").read_bytes()
-    expected_seed = bytes.fromhex("445652410201021b000201aa")
-    if seed != expected_seed:
-        print(f"unexpected fuzz seed: {seed.hex()}", file=sys.stderr)
-        return 1
-
     traversal_fixture = (ROOT / "scenarios/fixtures/DVRA-008-traversal.dvb").read_bytes()
     if not traversal_fixture.startswith(b"DVB1\x01") or b"../other-job.txt" not in traversal_fixture:
         print("unexpected DVRA-008 traversal fixture", file=sys.stderr)
-        return 1
-
-    oracle_text = (ROOT / "instructor-oracle/scenarios.yaml").read_text(encoding="utf-8")
-    scenario_ids = set(re.findall(r"^\s*- id:\s*(DVRA-[0-9A-Z]+)\s*$", oracle_text, re.MULTILINE))
-    if scenario_ids != EXPECTED_IDS:
-        print(f"oracle IDs differ: {sorted(scenario_ids)}", file=sys.stderr)
         return 1
 
     public_files = {path.name for path in (ROOT / "scenarios/public").glob("DVRA-*.md")}

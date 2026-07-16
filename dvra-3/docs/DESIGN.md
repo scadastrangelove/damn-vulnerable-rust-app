@@ -57,15 +57,15 @@ execution, and debug printing of the configuration becomes a secret disclosure.
 
 ## Scenario truth model
 
-Every scenario in `instructor-oracle/scenarios.yaml` records:
+Private course oracles can record each scenario with the five truth axes:
 
 ```yaml
 truth:
-  defect: true
-  built: true
-  reachable: true
-  attacker_controlled: true
-  impactful: true
+  defect: null
+  built: null
+  reachable: null
+  attacker_controlled: null
+  impactful: null
 ```
 
 A static tool can be correct about `defect` while still over-reporting

@@ -57,7 +57,6 @@ crates/parser/            vulnerable and reference binary parsers
 crates/unsafe-cache/      panic-safety and concurrency soundness labs
 fuzz/                     cargo-fuzz target and seed corpus
 scenarios/public/         student-facing scenario descriptions
-instructor-oracle/        expected truth, preconditions, and reproducers
 labs/                     isolated historical/compiler/supply-chain exercises
 infrastructure/           Docker and Compose isolation
 scripts/labctl            common lab commands
@@ -146,6 +145,10 @@ the shared repository helper:
 ../tools/dvra-docker dvra-3 ssrf-up
 ../tools/dvra-docker dvra-3 ssrf-down
 ```
+
+Private truth tables, grading notes, and non-public reproducers should live
+outside git, for example under a local ignored `instructor-oracle/` directory or
+in a separate private course repository.
 
 ## Source inspirations
 

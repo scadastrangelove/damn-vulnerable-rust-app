@@ -17,10 +17,9 @@
 // The reviewer's task is triage, not a reflex: does this build script
 // exfiltrate anything, reach the network, or execute an external program?
 // Trace what it actually reads, where the data goes, and whether any of it
-// leaves the build machine. The answer here is that it does not -- see
-// ANSWER_KEY (DVR-22). The point is to practise telling a benign build step
-// from a real one, and to notice that the *capability* (arbitrary build-time
-// code) is the standing risk regardless of this instance.
+// leaves the build machine. The point is to practise telling a benign build
+// step from a real one, and to notice that the *capability* (arbitrary
+// build-time code) is the standing risk regardless of this instance.
 // ---------------------------------------------------------------------------
 
 use std::io::Write;

@@ -33,11 +33,6 @@ ensure_no_truth_in_source() {
   ! find "$SOURCE" \( -name 'ANSWER_KEY.md' -o -name 'MANIFEST.toml' \) -print -quit | grep -q .
 }
 
-ensure_oracle() {
-  test -f "$ORACLE/MANIFEST.toml"
-  test -f "$ORACLE/ANSWER_KEY.md"
-}
-
 ensure_public_index() {
   test -f "$SCENARIOS"
   ! grep -Eiq 'vuln_line|fixed_fn|category[[:space:]]*=|reachable[[:space:]]*=|static_visible|fuzz_visible|panic[[:space:]]*=|concrete trigger|trigger|fix|reachable-real|decoy-unreachable|fuzz-only|threat-model-dependent' "$SCENARIOS"
@@ -80,7 +75,6 @@ EOF
 
 audit() {
   need_source
-  ensure_oracle
   ensure_no_truth_in_source
   ensure_public_index
   package_learner >/dev/null

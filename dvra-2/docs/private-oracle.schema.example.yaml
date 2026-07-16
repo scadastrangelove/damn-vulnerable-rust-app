@@ -1,16 +1,15 @@
 schema_version: 1
-scenario_id: DVRA-001
+scenario_id: DVRA-XXX
 truth:
-  defect: true
-  built: true
-  reachable: true
-  attacker_controlled: true
-  impactful: true
-threat_model: tenant-user
+  defect: null
+  built: null
+  reachable: null
+  attacker_controlled: null
+  impactful: null
+threat_model: example-threat-model
 evidence:
   code:
-    - crates/auth/src/lib.rs
-    - apps/api/src/lib.rs
+    - path/to/relevant/code.rs
   reproducer:
-    - cargo run -p dvra-labctl -- reproduce DVRA-001
+    - command used by the course image
 notes: "Example only. Keep real answers out of public scenario files."

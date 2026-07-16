@@ -35,7 +35,7 @@ fn main() {
     }
 
     println!("\nThis is a training target. See README.md for the threat model and");
-    println!("ANSWER_KEY.md for the reviewer notes. Do not deploy.");
+    println!("course materials for reviewer notes. Do not deploy.");
 }
 
 fn fmt_query(r: &Request) -> String {
