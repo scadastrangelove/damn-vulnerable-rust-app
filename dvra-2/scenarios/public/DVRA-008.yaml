@@ -1,0 +1,13 @@
+id: DVRA-008
+title: Panic-unsound unsafe collection
+component: crates/unsafe-cache
+suggested_tools:
+  - miri
+  - panic-injection
+threat_models:
+  - local worker process
+reproducer:
+  command: docker run dvra-miri:local sh tools/miri-reproduce.sh DVRA-008
+expected_signal: Miri reports Undefined Behavior after callback panic.
+public_goal: Show that a callback panic can skip repair of an unsafe collection invariant.
+private_truth: withheld

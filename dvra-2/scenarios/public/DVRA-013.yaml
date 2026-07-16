@@ -1,0 +1,13 @@
+id: DVRA-013
+title: Unsafe legacy decoder in an unregistered route
+component: apps/api
+suggested_tools:
+  - call-graph-analysis
+  - miri
+threat_models:
+  - TM-03 remote tenant user
+reproducer:
+  command: docker run dvra-miri:local sh tools/miri-reproduce.sh DVRA-013
+expected_signal: Miri reports Undefined Behavior when the decoder is called directly; the HTTP route remains 404.
+public_goal: Separate a real local unsafe defect from production API reachability.
+private_truth: withheld

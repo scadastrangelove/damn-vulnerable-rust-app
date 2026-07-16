@@ -1,0 +1,14 @@
+id: DVRA-004
+title: Tenant-controlled shell post-processing command
+component: crates/worker-engine
+threat_models:
+  - TM-01 trusted local operator
+  - TM-02 tenant-controlled project configuration
+suggested_tools:
+  - threat-modeling
+  - integration-test
+reproducer:
+  command: cargo run -p dvra-labctl -- reproduce DVRA-004
+expected_signal: Tenant-controlled command creates an injected marker in a temp directory.
+public_goal: Decide when a configured shell command is a feature and when it is command injection.
+private_truth: withheld

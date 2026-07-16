@@ -1,0 +1,110 @@
+name: dvra-2
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infrastructure/containers/Dockerfile
+    command: ["dvra-api"]
+    environment:
+      DVRA_BIND_ADDR: 0.0.0.0:3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp/dvra:rw,noexec,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 0.5
+    networks:
+      - dvra-internal
+
+  lab-worker:
+    profiles: ["labs"]
+    build:
+      context: ..
+      dockerfile: infrastructure/containers/Dockerfile
+    command:
+      - dvra-worker
+      - process
+      - /opt/dvra/configs/tenant-vulnerable.yaml
+      - /opt/dvra/scenarios/fixtures/parser/basic.dvra
+      - /tmp/dvra/work
+    environment:
+      DVRA_LAB_MODE: isolated
+    read_only: true
+    tmpfs:
+      - /tmp/dvra:rw,noexec,nosuid,nodev,size=64m
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 0.5
+
+  mock-metadata:
+    profiles: ["labs"]
+    build:
+      context: ..
+      dockerfile: infrastructure/containers/Dockerfile
+    command: ["dvra-mock-metadata-service"]
+    environment:
+      DVRA_METADATA_BIND_ADDR: 0.0.0.0:3100
+    read_only: true
+    tmpfs:
+      - /tmp/dvra:rw,noexec,nosuid,nodev,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.25
+    networks:
+      - dvra-internal
+
+  dvra-miri-008:
+    profiles: ["labs"]
+    build:
+      context: ..
+      dockerfile: infrastructure/containers/miri.Dockerfile
+    command: ["sh", "tools/miri-reproduce.sh", "DVRA-008"]
+    read_only: true
+    tmpfs:
+      - /tmp/dvra:rw,nosuid,nodev,size=512m
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 1.0
+
+  dvra-miri-013:
+    profiles: ["labs"]
+    build:
+      context: ..
+      dockerfile: infrastructure/containers/miri.Dockerfile
+    command: ["sh", "tools/miri-reproduce.sh", "DVRA-013"]
+    read_only: true
+    tmpfs:
+      - /tmp/dvra:rw,nosuid,nodev,size=512m
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 1.0
+
+networks:
+  dvra-internal:
+    internal: true

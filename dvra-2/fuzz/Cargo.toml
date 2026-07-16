@@ -1,0 +1,19 @@
+[package]
+name = "dvra-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+dvra-binary-parser = { path = "../crates/binary-parser" }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "dvra_006_differential"
+path = "fuzz_targets/dvra_006_differential.rs"
+test = false
+doc = false
+bench = false

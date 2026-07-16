@@ -1,0 +1,31 @@
+# Scaffold for `cargo +nightly fuzz`. Not built by the hermetic std-only build.
+# `cargo fuzz init` normally generates this; it is included so the harness is
+# self-documenting.
+
+[package]
+name = "dvr-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+
+[dependencies.dvr]
+path = ".."
+
+[[bin]]
+name = "route"
+path = "fuzz_targets/route.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "parser_equivalence"
+path = "fuzz_targets/parser_equivalence.rs"
+test = false
+doc = false

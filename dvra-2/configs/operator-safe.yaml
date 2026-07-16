@@ -1,0 +1,5 @@
+parser:
+  normalize_escapes: true
+post_process:
+  authority: operator-only
+  command: "printf operator-controlled > /tmp/dvra/operator.marker"

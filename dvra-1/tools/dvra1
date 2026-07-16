@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE="$ROOT/source"
+ORACLE="$ROOT/instructor-oracle"
+SCENARIOS="$ROOT/scenarios/public/index.toml"
+DIST="${DVRA1_DIST:-$ROOT/dist}"
+
+usage() {
+  cat <<'EOF'
+Usage: ./tools/dvra1 <command> [args]
+
+Commands:
+  unpack [dir]       Copy canonical learner source to dir/damn-vulnerable-rust.
+  test               Run the default std-only test gate.
+  test-ffi           Run tests with the optional FFI feature.
+  fuzz-route         Run the cargo-fuzz route target.
+  fuzz-parser        Run the cargo-fuzz parser_equivalence target.
+  miri               Run the Miri test gate.
+  package-learner    Build dist/dvra-1-learner.tar.gz from source/.
+  audit              Check layout, public/private split, and learner bundle.
+EOF
+}
+
+need_source() {
+  test -f "$SOURCE/Cargo.toml"
+  test -f "$SOURCE/README.md"
+  test -d "$SOURCE/src"
+}
+
+ensure_no_truth_in_source() {
+  ! find "$SOURCE" \( -name 'ANSWER_KEY.md' -o -name 'MANIFEST.toml' \) -print -quit | grep -q .
+}
+
+ensure_oracle() {
+  test -f "$ORACLE/MANIFEST.toml"
+  test -f "$ORACLE/ANSWER_KEY.md"
+}
+
+ensure_public_index() {
+  test -f "$SCENARIOS"
+  ! grep -Eiq 'vuln_line|fixed_fn|category[[:space:]]*=|reachable[[:space:]]*=|static_visible|fuzz_visible|panic[[:space:]]*=|concrete trigger|trigger|fix|reachable-real|decoy-unreachable|fuzz-only|threat-model-dependent' "$SCENARIOS"
+}
+
+package_learner() {
+  mkdir -p "$DIST"
+  local tmp
+  tmp="$(mktemp -d /tmp/dvra-1-package.XXXXXX)"
+  mkdir -p "$tmp/dvra-1-learner/source"
+  mkdir -p "$tmp/dvra-1-learner/scenarios/public"
+  rsync -a --delete \
+    --exclude target \
+    --exclude fuzz/target \
+    --exclude .git \
+    "$SOURCE/" "$tmp/dvra-1-learner/source/"
+  rsync -a "$ROOT/scenarios/public/" "$tmp/dvra-1-learner/scenarios/public/"
+  cat > "$tmp/dvra-1-learner/README.md" <<'EOF'
+# DVRA-1 learner bundle
+
+Start in `source/`:
+
+```sh
+cd source
+cargo test
+```
+
+Use `scenarios/public/index.toml` as the learner-facing scenario list.
+Instructor truth is not included in this bundle.
+EOF
+  tar -C "$tmp" -czf "$DIST/dvra-1-learner.tar.gz" dvra-1-learner
+  if tar -tzf "$DIST/dvra-1-learner.tar.gz" | grep -Eq '(^|/)(ANSWER_KEY\.md|MANIFEST\.toml)$'; then
+    echo "error: learner bundle contains instructor truth" >&2
+    rm -rf "$tmp"
+    return 1
+  fi
+  rm -rf "$tmp"
+  echo "$DIST/dvra-1-learner.tar.gz"
+}
+
+audit() {
+  need_source
+  ensure_oracle
+  ensure_no_truth_in_source
+  ensure_public_index
+  package_learner >/dev/null
+  test -s "$DIST/dvra-1-learner.tar.gz"
+  echo "ok: dvra-1 layout, public/private split, and learner bundle audit"
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  unpack)
+    need_source
+    dest="${2:-/tmp/dvra-1-work}"
+    mkdir -p "$dest"
+    rm -rf "$dest/damn-vulnerable-rust"
+    rsync -a --delete --exclude target --exclude fuzz/target "$SOURCE/" "$dest/damn-vulnerable-rust/"
+    echo "$dest/damn-vulnerable-rust"
+    ;;
+  test)
+    need_source
+    cargo test --manifest-path "$SOURCE/Cargo.toml"
+    ;;
+  test-ffi)
+    need_source
+    cargo test --manifest-path "$SOURCE/Cargo.toml" --features ffi
+    ;;
+  fuzz-route)
+    need_source
+    cd "$SOURCE"
+    cargo +nightly fuzz run route
+    ;;
+  fuzz-parser)
+    need_source
+    cd "$SOURCE"
+    cargo +nightly fuzz run parser_equivalence
+    ;;
+  miri)
+    need_source
+    cd "$SOURCE"
+    cargo +nightly miri test
+    ;;
+  package-learner)
+    need_source
+    ensure_no_truth_in_source
+    package_learner
+    ;;
+  audit)
+    audit
+    ;;
+  -h|--help|help|"")
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

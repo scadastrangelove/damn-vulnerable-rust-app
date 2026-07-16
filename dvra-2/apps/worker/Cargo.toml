@@ -1,0 +1,14 @@
+[package]
+name = "dvra-worker"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+dvra-binary-parser = { path = "../../crates/binary-parser" }
+dvra-config = { path = "../../crates/config" }
+dvra-worker-engine = { path = "../../crates/worker-engine" }
+
+[lints]
+workspace = true

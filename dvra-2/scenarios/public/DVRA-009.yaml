@@ -1,0 +1,13 @@
+id: DVRA-009
+title: Invalid unsafe impl Send/Sync
+component: crates/unsafe-cache
+suggested_tools:
+  - loom
+  - manual-audit
+threat_models:
+  - concurrent worker process
+reproducer:
+  command: cargo run -p dvra-labctl -- reproduce DVRA-009
+expected_signal: Loom reports concurrent access to UnsafeCell.
+public_goal: Model concurrent access to a non-atomic shared counter.
+private_truth: withheld

@@ -1,0 +1,13 @@
+id: DVRA-014
+title: Fixed-program Command::new false positive
+component: crates/worker-engine
+suggested_tools:
+  - manual-review
+  - integration-test
+threat_models:
+  - TM-03 remote tenant user
+reproducer:
+  command: cargo run -p dvra-labctl -- reproduce DVRA-014
+expected_signal: Shell metacharacters remain one argument and do not create a marker.
+public_goal: Prove whether shell metacharacters can change process execution.
+private_truth: withheld

@@ -1,0 +1,37 @@
+[package]
+name = "damn-vulnerable-rust"
+version = "0.1.0"
+edition = "2021"
+description = "A deliberately vulnerable Rust service for security-code-review training. NOT FOR PRODUCTION."
+publish = false
+
+[features]
+# Default build is std-only, zero dependencies, no C toolchain needed.
+default = []
+# FFI tier: compiles src/ffi_shim.c via `cc` and wires the /ffi/* routes.
+# Requires a C compiler. See src/features/ffi.rs.
+ffi = ["cc"]
+# Compiles the data-race demonstration test in features/concurrency.rs.
+# Intended to be run under ThreadSanitizer or Miri, never in a normal suite.
+race-demo = []
+
+[build-dependencies]
+cc = { version = "1", optional = true }
+
+[[bin]]
+name = "dvr-demo"
+path = "src/main.rs"
+
+[lib]
+name = "dvr"
+path = "src/lib.rs"
+
+# Intentionally std-only so the target compiles anywhere with no network.
+# A live HTTP variant (Axum/Actix) is described in README.md; the vulnerable
+# logic lives in plain functions so it can be reviewed, fuzzed, and unit-tested
+# without a web framework.
+
+[profile.release]
+# Deliberately NOT hardened. A real service would set overflow-checks = true
+# for security-critical crates; here we leave the default so the release-mode
+# wrapping behaviour in features/framing.rs is observable. See README.

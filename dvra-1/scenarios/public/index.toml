@@ -1,0 +1,183 @@
+# Learner-facing scenario index for DVRA-1.
+#
+# This file intentionally contains only learner-facing prompts. Instructor
+# truth lives in ../../instructor-oracle/.
+
+target = "damn-vulnerable-rust"
+private_truth = "withheld"
+
+[[scenario]]
+id = "DVR-01"
+title = "User search data access"
+feature = "user_search"
+prompt = "Review how user-controlled search criteria flow into the data-access layer."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-02"
+title = "File download path handling"
+feature = "file_download"
+prompt = "Review how request-supplied file names are resolved against the upload directory."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-03"
+title = "Document object access"
+feature = "documents"
+prompt = "Review whether identity, role, and object ownership are enforced at the data access point."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-04"
+title = "Header preview parsing"
+feature = "header_parse"
+prompt = "Review string handling around request headers and explain any availability implications."
+allowed_tools = ["manual-review", "unit-tests", "fuzzing"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-05"
+title = "Frame length parsing"
+feature = "framing"
+prompt = "Review frame length arithmetic across debug and release semantics."
+allowed_tools = ["manual-review", "unit-tests", "fuzzing"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-06"
+title = "Upload sizing"
+feature = "upload"
+prompt = "Review allocation and expansion behavior for request-controlled upload metadata."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-07"
+title = "Native helper reachability"
+feature = "native"
+prompt = "Review unsafe helper code and prove whether it is on a routed attacker path."
+allowed_tools = ["manual-review", "call-graph-review", "miri"]
+expected_artifact = "reachability argument with evidence"
+
+[[scenario]]
+id = "DVR-08"
+title = "Validated numeric parsing"
+feature = "validation"
+prompt = "Review parsing preconditions and decide whether the local invariant is sufficient."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "invariant argument with evidence"
+
+[[scenario]]
+id = "DVR-09"
+title = "Post-processing hook trust boundary"
+feature = "hooks"
+prompt = "Review command execution behavior under the stated trust model and name assumptions that would change the risk."
+allowed_tools = ["manual-review", "threat-model-review", "unit-tests"]
+expected_artifact = "review note with explicit assumptions"
+
+[[scenario]]
+id = "DVR-10"
+title = "Authentication audit trail"
+feature = "auth"
+prompt = "Review what authentication material is retained in logs or other observable outputs."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-11"
+title = "Authentication comparison"
+feature = "auth"
+prompt = "Review how presented credentials are compared with expected credential material."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-12"
+title = "Proxy path interpretation"
+feature = "proxy"
+prompt = "Review whether filtering and backend resolution share the same canonical interpretation."
+allowed_tools = ["manual-review", "differential-fuzzing", "unit-tests"]
+expected_artifact = "parser-equivalence review note"
+
+[[scenario]]
+id = "DVR-13"
+title = "Generic byte collection"
+feature = "collect"
+prompt = "Review unsafe code that depends on contracts provided by safe trait implementations."
+allowed_tools = ["manual-review", "miri", "unit-tests"]
+expected_artifact = "unsafe invariant review note"
+
+[[scenario]]
+id = "DVR-14"
+title = "Nested expression parsing"
+feature = "nested"
+prompt = "Review parser behavior when input controls structural nesting depth."
+allowed_tools = ["manual-review", "fuzzing", "unit-tests"]
+expected_artifact = "availability review note"
+
+[[scenario]]
+id = "DVR-15"
+title = "Shared cache concurrency"
+feature = "concurrency"
+prompt = "Review unsafe concurrency promises and the generic bounds needed to uphold them."
+allowed_tools = ["manual-review", "thread-sanitizer", "unit-tests"]
+expected_artifact = "concurrency-safety review note"
+
+[[scenario]]
+id = "DVR-16"
+title = "FFI callback behavior"
+feature = "ffi"
+prompt = "Review Rust behavior at the C callback boundary."
+allowed_tools = ["manual-review", "ffi-tests", "miri"]
+expected_artifact = "FFI safety review note"
+
+[[scenario]]
+id = "DVR-17"
+title = "FFI request lifecycle"
+feature = "ffi"
+prompt = "Review request lifecycle accounting when control returns early across an FFI boundary."
+allowed_tools = ["manual-review", "ffi-tests"]
+expected_artifact = "lifecycle review note"
+
+[[scenario]]
+id = "DVR-18"
+title = "FFI buffer length handling"
+feature = "ffi"
+prompt = "Review how Rust code treats lengths supplied by the C side of the boundary."
+allowed_tools = ["manual-review", "ffi-tests", "miri"]
+expected_artifact = "FFI buffer-safety review note"
+
+[[scenario]]
+id = "DVR-19"
+title = "Deduplication hashing"
+feature = "dedup"
+prompt = "Review hashing choices under different input-control and deployment assumptions."
+allowed_tools = ["manual-review", "threat-model-review", "unit-tests"]
+expected_artifact = "review note with explicit assumptions"
+
+[[scenario]]
+id = "DVR-20"
+title = "Record builder panic safety"
+feature = "records"
+prompt = "Review unsafe collection-building code when element construction can fail."
+allowed_tools = ["manual-review", "miri", "unit-tests"]
+expected_artifact = "panic-safety review note"
+
+[[scenario]]
+id = "DVR-21"
+title = "Profile update binding"
+feature = "profile"
+prompt = "Review which profile fields are accepted from request bodies and which are authority-controlled."
+allowed_tools = ["manual-review", "unit-tests"]
+expected_artifact = "security review note with evidence"
+
+[[scenario]]
+id = "DVR-22"
+title = "Build script review"
+feature = "build.rs"
+prompt = "Review build-script behavior as supply-chain-relevant code and distinguish capability from demonstrated impact."
+allowed_tools = ["manual-review", "build-review"]
+expected_artifact = "supply-chain review note"

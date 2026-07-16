@@ -1,0 +1,8 @@
+/target/
+/fuzz/target/
+/fuzz/artifacts/
+/fuzz/corpus/
+/instructor-oracle/
+*.profraw
+*.profdata
+.DS_Store

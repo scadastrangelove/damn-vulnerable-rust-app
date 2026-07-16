@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  tools/dvra-docker list
+  tools/dvra-docker dvra-1 COMMAND
+  tools/dvra-docker dvra-2 COMMAND
+  tools/dvra-docker dvra-3 COMMAND
+
+DVRA-1 commands:
+  config        Validate Compose config.
+  build         Build the DVRA-1 lab image.
+  test          Run the std-only test gate in an isolated container.
+  audit         Run the public/private split audit in an isolated container.
+  test-ffi      Run the optional FFI test gate in an isolated container.
+
+DVRA-2 commands:
+  config        Validate Compose config.
+  build         Build runtime images.
+  up            Start the API on 127.0.0.1:3000.
+  down          Stop containers and remove orphans.
+  labs-config   Validate the labs profile config.
+  lab-worker    Run the isolated worker lab.
+  miri-008      Run the DVRA-008 Miri container.
+  miri-013      Run the DVRA-013 Miri container.
+
+DVRA-3 commands:
+  config        Validate Compose config.
+  build         Build runtime images.
+  up            Start the API on 127.0.0.1:3000.
+  down          Stop containers and remove orphans.
+  ssrf-config   Validate the SSRF profile config.
+  ssrf-up       Start the isolated SSRF lab.
+  ssrf-down     Stop the isolated SSRF lab.
+  ssrf-logs     Show recent SSRF lab logs.
+EOF
+}
+
+compose() {
+  docker compose "$@"
+}
+
+dvra1() {
+  cd "$ROOT/dvra-1"
+  case "${1:-}" in
+    config)
+      compose -f infrastructure/compose.yaml config
+      ;;
+    build)
+      compose -f infrastructure/compose.yaml build test audit
+      ;;
+    test)
+      compose -f infrastructure/compose.yaml run --build --rm test
+      ;;
+    audit)
+      compose -f infrastructure/compose.yaml run --build --rm audit
+      ;;
+    test-ffi)
+      compose -f infrastructure/compose.yaml --profile ffi run --build --rm test-ffi
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
+dvra2() {
+  cd "$ROOT/dvra-2"
+  case "${1:-}" in
+    config)
+      compose -f infrastructure/compose.yaml config
+      ;;
+    build)
+      compose -f infrastructure/compose.yaml build api
+      ;;
+    up)
+      compose -f infrastructure/compose.yaml up --build api
+      ;;
+    down)
+      compose -f infrastructure/compose.yaml down --remove-orphans
+      ;;
+    labs-config)
+      compose -f infrastructure/compose.yaml --profile labs config
+      ;;
+    lab-worker)
+      compose -f infrastructure/compose.yaml --profile labs run --build --rm lab-worker
+      ;;
+    miri-008)
+      compose -f infrastructure/compose.yaml --profile labs run --build --rm dvra-miri-008
+      ;;
+    miri-013)
+      compose -f infrastructure/compose.yaml --profile labs run --build --rm dvra-miri-013
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
+dvra3() {
+  cd "$ROOT/dvra-3"
+  case "${1:-}" in
+    config)
+      compose -f infrastructure/compose.yaml config
+      ;;
+    build)
+      compose -f infrastructure/compose.yaml build dvra
+      ;;
+    up)
+      compose -f infrastructure/compose.yaml up --build dvra
+      ;;
+    down)
+      compose -f infrastructure/compose.yaml down --remove-orphans
+      ;;
+    ssrf-config)
+      compose -f infrastructure/compose.yaml -f infrastructure/compose.ssrf.yaml --profile ssrf-lab config
+      ;;
+    ssrf-up)
+      compose -f infrastructure/compose.yaml -f infrastructure/compose.ssrf.yaml --profile ssrf-lab up --build --detach
+      ;;
+    ssrf-down)
+      compose -f infrastructure/compose.yaml -f infrastructure/compose.ssrf.yaml --profile ssrf-lab down --remove-orphans
+      ;;
+    ssrf-logs)
+      compose -f infrastructure/compose.yaml -f infrastructure/compose.ssrf.yaml --profile ssrf-lab logs --tail=80
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
+case "${1:-}" in
+  list)
+    usage
+    ;;
+  dvra-1)
+    shift
+    dvra1 "${1:-}"
+    ;;
+  dvra-2)
+    shift
+    dvra2 "${1:-}"
+    ;;
+  dvra-3)
+    shift
+    dvra3 "${1:-}"
+    ;;
+  -h|--help|help|"")
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

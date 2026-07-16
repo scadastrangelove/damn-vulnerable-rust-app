@@ -1,0 +1,22 @@
+[server]
+bind = "0.0.0.0:3000"
+
+[lab]
+enable_debug_routes = true
+
+[storage]
+root = "/tmp/dvra/storage"
+
+[fetch]
+# DVRA-009 fixed endpoint permits only exact configured origins. The fake
+# metadata service is intentionally absent from this list.
+allowed_origins = ["https://updates.example.invalid"]
+timeout_ms = 2000
+max_response_bytes = 65536
+
+[post_process]
+shell_template = "printf 'processed:%s\\n'"
+fixed_program = "printf"
+fixed_args = ["processed:%s\\n"]
+secret_token = "training-secret-do-not-use"
+threat_model = "tenant-controlled"

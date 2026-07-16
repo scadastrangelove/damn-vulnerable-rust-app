@@ -1,0 +1,5 @@
+parser:
+  normalize_escapes: true
+post_process:
+  authority: tenant-project
+  command: "printf DVRA-004 > /tmp/dvra/DVRA-004.marker"

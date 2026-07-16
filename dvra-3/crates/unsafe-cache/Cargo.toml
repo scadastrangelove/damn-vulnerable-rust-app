@@ -1,0 +1,16 @@
+[package]
+name = "dvra-unsafe-cache"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+loom-tests = ["dep:loom"]
+
+[dependencies]
+loom = { workspace = true, optional = true }
+
+[lints]
+workspace = true

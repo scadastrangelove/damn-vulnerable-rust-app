@@ -1,0 +1,126 @@
+# DVRA implementations
+
+This directory collects multiple implementations of Damn Vulnerable Rust
+Application in one place. The goal is to keep a shared security-training and QA
+contract while allowing each implementation to have a different scale and
+teaching role.
+
+All implementations are deliberately vulnerable. Do not run them as public
+services, attach real secrets, mount home directories, expose SSH/GPG agents, or
+mount the Docker socket. Heavy Docker, Miri, fuzzing, and sanitizer gates should
+run in disposable environments, for example Tamm.
+
+## Repository map
+
+| Path | Role | Status |
+| --- | --- | --- |
+| `dvra-1/` | Compact code-review benchmark with many planted findings, decoys, public scenario prompts, and instructor-only truth. | Imported as implementation 1 |
+| `dvra-2/` | Realistic artifact-processing service/lab with API, worker, fuzzing, Loom, Miri, and Docker isolation. | Imported as implementation 2 |
+| `dvra-3/` | Application lab `0.2.0-alpha.2` with Axum API, SSRF/internal metadata lab, bundle traversal, fuzz/Miri/Loom scenarios, public scenarios, and instructor oracle. | Imported as implementation 3 |
+| `tools/dvra-docker` | Root Docker/Compose facade for all implementations. | Shared helper |
+| `rust-security-code-review-canonical_1.md` | Shared reference/checklist for Rust security review methodology. | Reference material |
+
+## Shared Docker facade
+
+Use `tools/dvra-docker` from the repository root to discover and run the
+containerized workflows:
+
+```sh
+tools/dvra-docker list
+tools/dvra-docker dvra-1 test
+tools/dvra-docker dvra-1 audit
+tools/dvra-docker dvra-2 config
+tools/dvra-docker dvra-2 up
+tools/dvra-docker dvra-3 config
+tools/dvra-docker dvra-3 ssrf-config
+```
+
+The default commands are intentionally conservative. Dangerous or heavy gates
+remain explicit (`dvra-1 test-ffi`, `dvra-2 miri-008`, `dvra-2 miri-013`,
+`dvra-3 ssrf-up`).
+
+## Implementation 1
+
+`dvra-1` is a compact review benchmark with an explicit public/private split:
+
+- `source/` contains the learner-facing Rust crate;
+- `scenarios/public/index.toml` contains learner-facing scenario prompts;
+- `instructor-oracle/MANIFEST.toml` and `instructor-oracle/ANSWER_KEY.md`
+  contain private truth;
+- `tools/dvra1` builds learner-safe bundles and audits the layout;
+- `infrastructure/compose.yaml` runs the default test/audit gates in an
+  isolated container;
+- `damn-vulnerable-rust.tar.gz` is kept as a legacy provenance artifact.
+
+Main entry points:
+
+```sh
+cd dvra-1
+./tools/dvra1 test
+./tools/dvra1 audit
+./tools/dvra1 package-learner
+../tools/dvra-docker dvra-1 test
+```
+
+## Implementation 2
+
+`dvra-2` is a workspace implementation with separate applications, crates,
+scenario manifests, Docker support, and QA documentation.
+
+Main entry points:
+
+```sh
+cd dvra-2
+cargo run -p dvra-labctl -- audit
+cargo run -p dvra-labctl -- doctor
+cargo test --workspace --locked
+```
+
+Documentation:
+
+- `dvra-2/README.md` — implementation overview;
+- `dvra-2/docs/completeness.md` — MVP completeness checklist;
+- `dvra-2/docs/qa.md` — QA plan and release checklist;
+- `dvra-2/docs/verification.md` — local and Docker/Miri gates;
+- `dvra-2/docs/instructor-guide.md` — instructor-facing workflow.
+
+Heavy Docker/Miri gates have been run through:
+
+```sh
+ssh gordey@85.142.100.8
+```
+
+## Implementation 3
+
+`dvra-3` is another workspace implementation, closer to a full application lab:
+
+- `apps/api` and `apps/metadata-service`;
+- `crates/*` for config, bundle parsing, fetch/SSRF, parser, and unsafe-cache;
+- `scenarios/public` for learner-facing descriptions;
+- `instructor-oracle/scenarios.yaml` for private truth;
+- `scripts/labctl` for doctor/layout/test/fuzz/miri/loom/reproducers;
+- `infrastructure/compose*.yaml` for isolated SSRF/runtime profiles.
+
+Main entry points:
+
+```sh
+cd dvra-3
+./scripts/labctl verify-layout
+./scripts/labctl doctor
+./scripts/labctl test
+../tools/dvra-docker dvra-3 config
+```
+
+`dvra-3/dvra-3.zip` is kept as a provenance artifact.
+
+## Shared contract
+
+All three implementations follow the same high-level rules:
+
+- learner-facing public metadata must not disclose private truth;
+- answer keys, exploit harnesses, and grading oracles are instructor-only;
+- every implementation needs a clear reproducer and verification story;
+- dangerous runtime paths need explicit gates and a Docker/disposable execution
+  path;
+- historical, FFI, supply-chain, and compiler-hole labs must not accidentally
+  become part of an ordinary root build.

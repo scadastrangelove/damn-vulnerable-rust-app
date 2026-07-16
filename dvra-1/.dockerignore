@@ -1,0 +1,7 @@
+.DS_Store
+target/
+**/target/
+**/fuzz/target/
+dist/
+damn-vulnerable-rust.tar.gz
+dvra-1.zip

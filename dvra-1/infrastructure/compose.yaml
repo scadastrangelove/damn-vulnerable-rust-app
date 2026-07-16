@@ -1,0 +1,54 @@
+name: dvra-1
+
+services:
+  test:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile
+    command: ["test"]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,exec,nosuid,nodev,size=512m
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 1.0
+
+  audit:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile
+    command: ["audit"]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,exec,nosuid,nodev,size=512m
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 1.0
+
+  test-ffi:
+    profiles: ["ffi"]
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile
+    command: ["test-ffi"]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,exec,nosuid,nodev,size=512m
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 1.0

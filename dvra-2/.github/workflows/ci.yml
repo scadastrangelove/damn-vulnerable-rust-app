@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.86.0
+        with:
+          components: clippy,rustfmt
+      - run: cargo run -p dvra-labctl -- audit
+      - run: cargo fmt --all -- --check
+      - run: cargo test --workspace --locked
+      - run: cargo test -p dvra-unsafe-cache --features loom-model --locked
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo check --manifest-path fuzz/Cargo.toml --locked
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f infrastructure/compose.yaml --profile labs config
+      - run: docker compose -f infrastructure/compose.yaml --profile labs build api lab-worker mock-metadata

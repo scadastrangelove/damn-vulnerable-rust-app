@@ -1,0 +1,15 @@
+id: DVRA-006
+title: Validator and normalizer parser offset mismatch
+component: crates/binary-parser
+fixtures:
+  - scenarios/fixtures/parser/dvra-006.dvra
+suggested_tools:
+  - cargo-fuzz
+  - differential-testing
+threat_models:
+  - TM-03 remote tenant user
+reproducer:
+  command: cargo run -p dvra-labctl -- reproduce DVRA-006
+expected_signal: Fast parser panics after raw validation and normalization.
+public_goal: Find an input where raw validation offsets are reused after normalization.
+private_truth: withheld

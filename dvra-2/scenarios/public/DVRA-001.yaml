@@ -1,0 +1,16 @@
+id: DVRA-001
+title: IDOR between tenant projects
+component: apps/api
+entry_points:
+  - GET /api/projects/{project_id}/artifacts/{artifact_id}
+suggested_tools:
+  - threat-modeling
+  - manual-review
+  - dast
+threat_models:
+  - TM-03 remote tenant user
+reproducer:
+  command: cargo run -p dvra-labctl -- reproduce DVRA-001
+expected_signal: Cross-tenant artifact read returns HTTP 200 in tests and runtime.
+public_goal: Prove whether an authenticated tenant can read another tenant's artifact.
+private_truth: withheld

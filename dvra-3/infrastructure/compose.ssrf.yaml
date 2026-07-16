@@ -1,0 +1,7 @@
+services:
+  dvra:
+    environment:
+      DVRA_SSRF_LAB_MODE: fake-metadata-only
+      DVRA_ACK_INSECURE: I_UNDERSTAND
+    depends_on:
+      - metadata

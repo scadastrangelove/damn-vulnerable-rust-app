@@ -1,0 +1,24 @@
+[server]
+bind = "127.0.0.1:3000"
+
+[lab]
+enable_debug_routes = true
+
+[storage]
+root = "/tmp/dvra/storage"
+
+[fetch]
+# DVRA-009 fixed endpoint permits only exact configured origins. The fake
+# metadata service is intentionally absent from this list.
+allowed_origins = ["https://updates.example.invalid"]
+timeout_ms = 2000
+max_response_bytes = 65536
+
+[post_process]
+# In TM-LOCAL-ADMIN the operator controls this field, while the artifact name is
+# still tenant input. In TM-TENANT-CONFIG the tenant controls both.
+shell_template = "printf 'processed:%s\n'"
+fixed_program = "printf"
+fixed_args = ["processed:%s\n"]
+secret_token = "training-secret-do-not-use"
+threat_model = "tenant-controlled"
