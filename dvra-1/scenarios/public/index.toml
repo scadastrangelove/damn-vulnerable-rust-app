@@ -1,10 +1,10 @@
 # Learner-facing scenario index for DVRA-1.
 #
-# This file intentionally contains only learner-facing prompts. Instructor
-# truth lives in ../../instructor-oracle/.
+# This file intentionally contains prompts only. Benchmark gold labels live in
+# ../../instructor-oracle/.
 
 target = "damn-vulnerable-rust"
-private_truth = "withheld"
+benchmark_oracle = "../../instructor-oracle/MANIFEST.toml"
 
 [[scenario]]
 id = "DVR-01"

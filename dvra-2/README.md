@@ -54,9 +54,10 @@ For QA and scope review, see `docs/qa.md` and `docs/completeness.md`.
   `DVRA_LAB_MODE=isolated` and the work directory is under `/tmp/dvra`.
 - `crates/*`: reusable lab building blocks.
 - `tools/labctl`: small reproducer/doctor helper.
-- `scenarios/public`: learner-facing scenario metadata. It deliberately omits
-  the private truth table.
-- `docs/private-oracle.schema.example.yaml`: example instructor oracle shape.
+- `scenarios/public`: learner-facing scenario metadata. It points to the
+  benchmark oracle without duplicating labels inline.
+- `instructor-oracle/scenarios.yaml`: benchmark gold labels.
+- `docs/private-oracle.schema.example.yaml`: example oracle shape.
 - `docs/completeness.md`: MVP scope and deferral audit.
 - `docs/qa.md`: quality gates and release checklist.
 - `docs/instructor-guide.md`: course-facing review flow and rubric.
@@ -72,7 +73,6 @@ Every finding should be classified with five independent axes:
 defect && built && reachable && attacker_controlled && impactful
 ```
 
-The public scenario files describe the exercise. The answers belong in a
-private oracle, outside version control by default under `instructor-oracle/`.
-That split is the heart of the lab: learners must prove application risk, not
-just point at a dangerous-looking line.
+The public scenario files describe the exercise. The benchmark gold labels live
+in `instructor-oracle/scenarios.yaml`. That split lets tools run on prompts and
+code while evaluators compare against explicit truth labels.

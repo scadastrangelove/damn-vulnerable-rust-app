@@ -115,7 +115,12 @@ fn audit() -> Result<(), Box<dyn Error>> {
     for (id, _title) in SCENARIOS {
         let manifest = format!("scenarios/public/{id}.yaml");
         require_path(&root, &manifest, &mut failures);
-        require_manifest_field(&root, &manifest, "private_truth: withheld", &mut failures);
+        require_manifest_field(
+            &root,
+            &manifest,
+            "benchmark_oracle: instructor-oracle/scenarios.yaml",
+            &mut failures,
+        );
         require_manifest_field(&root, &manifest, "reproducer:", &mut failures);
         require_manifest_field(&root, &manifest, "expected_signal:", &mut failures);
     }
@@ -137,10 +142,6 @@ fn audit() -> Result<(), Box<dyn Error>> {
         ));
     }
 
-    if root.join("instructor-oracle").exists() {
-        failures.push("instructor-oracle/ must stay outside the public tree".to_owned());
-    }
-
     if failures.is_empty() {
         println!("ok: repository completeness audit");
         Ok(())
@@ -160,8 +161,9 @@ fn required_paths() -> &'static [&'static str] {
         "docs/qa.md",
         "docs/threat-models.md",
         "docs/verification.md",
-        "docs/private-oracle.md",
+        "docs/benchmark-oracle.md",
         "docs/private-oracle.schema.example.yaml",
+        "instructor-oracle/scenarios.yaml",
         "apps/api/src/lib.rs",
         "apps/mock-metadata-service/src/main.rs",
         "apps/worker/src/main.rs",

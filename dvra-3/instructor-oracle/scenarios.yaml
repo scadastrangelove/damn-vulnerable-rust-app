@@ -1,0 +1,162 @@
+version: 1
+scenarios:
+  - id: DVRA-001
+    title: Cross-tenant artifact access
+    cwe: [CWE-639, CWE-862]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    reproducer: scripts/labctl reproduce DVRA-001
+    fixed_surface: GET /v1/fixed/artifacts/{id}
+
+  - id: DVRA-002
+    title: Shell injection in post-processing
+    cwe: [CWE-78]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    preconditions:
+      environment:
+        DVRA_LAB_MODE: vulnerable
+        DVRA_ACK_INSECURE: I_UNDERSTAND
+      threat_model: TM-TENANT-CONFIG or attacker-controlled artifact name
+    fixed_surface: POST /v1/fixed/post-process
+
+  - id: DVRA-003
+    title: Stale parser offsets after normalization
+    cwe: [CWE-20, CWE-125, CWE-400]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    expected_detection:
+      clippy: false
+      cargo_audit: false
+      fuzzing: true
+      manual_review: true
+    seed_hex: 445652410201021b000201aa
+
+  - id: DVRA-004
+    title: Panic-safety double drop
+    cwe: [CWE-416, CWE-672]
+    truth:
+      defect: true
+      built: true
+      reachable: false
+      attacker_controlled: false
+      impactful: false
+    expected_detection:
+      miri: true
+      clippy: false
+    notes: The type is not used by the API in MVP; it is a real local soundness defect.
+
+  - id: DVRA-005
+    title: Incorrect Sync implementation
+    cwe: [CWE-362]
+    truth:
+      defect: true
+      built: true
+      reachable: false
+      attacker_controlled: false
+      impactful: false
+    expected_detection:
+      loom: true
+      clippy: false
+
+  - id: DVRA-006A
+    title: Unreachable legacy shell export
+    cwe: [CWE-78]
+    truth:
+      defect: true
+      built: true
+      reachable: false
+      attacker_controlled: false
+      impactful: false
+
+  - id: DVRA-006B
+    title: Safe process argument look-alike
+    cwe: []
+    truth:
+      defect: false
+      built: true
+      reachable: false
+      attacker_controlled: true
+      impactful: false
+
+  - id: DVRA-007
+    title: Secret-bearing config in logs
+    cwe: [CWE-532]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: false
+      impactful: true
+    preconditions:
+      config: lab.enable_debug_routes=true
+      threat_model: log readers are less trusted than config readers
+  - id: DVRA-008
+    title: Bundle extraction path traversal
+    cwe: [CWE-22, CWE-23]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    preconditions:
+      environment:
+        DVRA_LAB_MODE: vulnerable
+        DVRA_ACK_INSECURE: I_UNDERSTAND
+      impact: overwrite another job file under the shared storage root
+    expected_detection:
+      clippy: false
+      cargo_audit: false
+      dast: true
+      manual_review: true
+    reproducer: scripts/labctl reproduce DVRA-008
+    fixed_surface: POST /v1/fixed/bundles/{job_id}
+
+  - id: DVRA-009
+    title: Server-side request forgery into a fake metadata service
+    cwe: [CWE-918]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    preconditions:
+      environment:
+        DVRA_SSRF_LAB_MODE: fake-metadata-only
+        DVRA_ACK_INSECURE: I_UNDERSTAND
+      request_url: http://metadata:8081/redirect-to-credentials
+    threat_models:
+      - id: TM-NO-INTERNAL-EGRESS
+        metadata_route_available: false
+        impactful: false
+        expected_result: upstream resolution or connection failure
+      - id: TM-INTERNAL-METADATA
+        metadata_route_available: true
+        impactful: true
+        expected_result: disclosure of DVRA_FAKE_METADATA_TOKEN after redirect
+      - id: TM-TRUSTED-CONFIG-URL
+        attacker_controls_url: false
+        impactful: false
+        expected_result: dangerous capability without an attacker-controlled path
+    expected_detection:
+      clippy: false
+      cargo_audit: false
+      dast: true
+      manual_review: true
+      threat_model_review: true
+    reproducer: scripts/labctl reproduce DVRA-009
+    fixed_surface: POST /v1/fixed/fetch

@@ -6,7 +6,6 @@ target/
 **/fuzz/target/
 **/fuzz/artifacts/
 **/fuzz/corpus/
-**/instructor-oracle/
 dvra-1/dist/
 *.profraw
 *.profdata

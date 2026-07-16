@@ -10,4 +10,4 @@ reproducer:
   command: cargo run -p dvra-labctl -- reproduce DVRA-014
 expected_signal: Shell metacharacters remain one argument and do not create a marker.
 public_goal: Prove whether shell metacharacters can change process execution.
-private_truth: withheld
+benchmark_oracle: instructor-oracle/scenarios.yaml

@@ -146,9 +146,9 @@ the shared repository helper:
 ../tools/dvra-docker dvra-3 ssrf-down
 ```
 
-Private truth tables, grading notes, and non-public reproducers should live
-outside git, for example under a local ignored `instructor-oracle/` directory or
-in a separate private course repository.
+Benchmark gold labels live in `instructor-oracle/scenarios.yaml`. For
+challenge-style classroom use, distribute a branch or bundle without that
+directory until grading.
 
 ## Source inspirations
 

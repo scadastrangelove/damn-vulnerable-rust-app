@@ -8,7 +8,7 @@
 //!
 //! There are NO "// VULN HERE" markers in the feature code. Read the threat
 //! model in `README.md` before reviewing — several verdicts depend on it.
-//! Instructor truth is intentionally kept outside the learner-facing source tree.
+//! Benchmark labels are intentionally kept separate from learner-facing source.
 //!
 //! SECURITY: do not deploy. Do not expose to a network. Educational use only.
 

@@ -1,0 +1,118 @@
+version: 1
+implementation: dvra-2
+scenarios:
+  - id: DVRA-001
+    title: IDOR between tenant projects
+    cwe: [CWE-639, CWE-862]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    reproducer: cargo run -p dvra-labctl -- reproduce DVRA-001
+    expected_signal: Cross-tenant artifact read returns HTTP 200.
+    notes: Authorization checks project access but artifact lookup still allows the seeded cross-tenant read.
+
+  - id: DVRA-004
+    title: Tenant-controlled shell post-processing command
+    cwe: [CWE-78]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    threat_models:
+      - id: TM-01
+        name: trusted local operator
+        attacker_controlled: false
+        impactful: false
+      - id: TM-02
+        name: tenant-controlled project configuration
+        attacker_controlled: true
+        impactful: true
+    reproducer: cargo run -p dvra-labctl -- reproduce DVRA-004
+    expected_signal: Tenant-controlled command creates an injected marker in a temp directory.
+    notes: The same sink is administrative functionality or command injection depending on config authority.
+
+  - id: DVRA-006
+    title: Validator and normalizer parser offset mismatch
+    cwe: [CWE-20, CWE-125, CWE-400]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    expected_detection:
+      cargo_fuzz: true
+      differential_testing: true
+      clippy: false
+    reproducer: cargo run -p dvra-labctl -- reproduce DVRA-006
+    expected_signal: Fast parser panics after raw validation and normalization.
+
+  - id: DVRA-008
+    title: Panic-unsound unsafe collection
+    cwe: [CWE-416, CWE-672]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    expected_detection:
+      miri: true
+      panic_injection: true
+      clippy: false
+    reproducer: docker compose -f infrastructure/compose.yaml --profile labs run --rm dvra-miri-008
+    expected_signal: Miri reports Undefined Behavior after callback panic.
+    notes: The lab exposes the unsafe collection through an isolated Miri reproducer rather than the API.
+
+  - id: DVRA-009
+    title: Invalid unsafe impl Send/Sync
+    cwe: [CWE-362]
+    truth:
+      defect: true
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: true
+    expected_detection:
+      loom: true
+      manual_audit: true
+      clippy: false
+    reproducer: cargo run -p dvra-labctl -- reproduce DVRA-009
+    expected_signal: Loom reports concurrent access to UnsafeCell.
+
+  - id: DVRA-013
+    title: Unsafe legacy decoder in an unregistered route
+    cwe: [CWE-125]
+    truth:
+      defect: true
+      built: true
+      reachable: false
+      attacker_controlled: false
+      impactful: false
+    expected_detection:
+      miri: true
+      call_graph_review: true
+    reproducer: docker compose -f infrastructure/compose.yaml --profile labs run --rm dvra-miri-013
+    expected_signal: Miri reports Undefined Behavior when called directly; HTTP route remains 404.
+    notes: This is a real local unsafe defect and an intentional application-risk false positive.
+
+  - id: DVRA-014
+    title: Fixed-program Command::new false positive
+    cwe: []
+    truth:
+      defect: false
+      built: true
+      reachable: true
+      attacker_controlled: true
+      impactful: false
+    expected_detection:
+      manual_review: true
+      pattern_sast_false_positive: true
+    reproducer: cargo run -p dvra-labctl -- reproduce DVRA-014
+    expected_signal: Shell metacharacters remain one argument and do not create a marker.
+    notes: The command path uses a fixed executable with untrusted data as one argument and no shell.

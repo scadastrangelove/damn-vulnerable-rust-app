@@ -1,10 +1,11 @@
-# Private Oracle
+# Benchmark Oracle
 
-DVRA keeps learner-facing scenario descriptions separate from the instructor
-truth table. Public manifests should explain the surface, threat model choices,
-and suggested tools. They should not encode the final answer.
+DVRA keeps learner-facing scenario descriptions separate from benchmark gold
+labels. Public manifests explain the surface, threat model choices, suggested
+tools, and reproducer commands. The gold labels live in
+`instructor-oracle/scenarios.yaml`.
 
-The instructor oracle should answer these five questions independently:
+The benchmark oracle should answer these five questions independently:
 
 - `defect`: is an invariant actually violated?
 - `built`: is the code included after feature and cfg resolution?
@@ -16,4 +17,4 @@ The instructor oracle should answer these five questions independently:
 membership are resolved. It does not mean a linker happened to retain or discard
 a symbol.
 
-The recommended local path is `instructor-oracle/`, which is ignored by Git.
+The published benchmark path is `instructor-oracle/scenarios.yaml`.

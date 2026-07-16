@@ -12,19 +12,19 @@ finding scary-looking Rust.
 3. Require evidence for each axis: code references, route or call graph,
    configuration authority, test output, fuzzing, Loom, Miri, or container
    execution.
-4. Compare submissions against a private oracle kept outside this repository.
+4. Compare submissions against the benchmark oracle in
+   `instructor-oracle/scenarios.yaml`.
 
-## What To Keep Private
+## Benchmark Gold Labels
 
-Keep these in `instructor-oracle/` or a separate private repository:
+The public benchmark includes the gold labels needed for tool evaluation:
 
 - final truth table;
-- exploit harnesses beyond the public reproducers;
-- fixed implementations;
 - scoring rules;
 - expected false-positive and false-negative rationale.
 
-Public manifests may include reproducible signals, but not the answer.
+For challenge-style classroom use, instructors can distribute a branch or bundle
+without `instructor-oracle/` until grading.
 
 ## Review Rubric
 

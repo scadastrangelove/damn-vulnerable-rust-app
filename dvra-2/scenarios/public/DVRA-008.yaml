@@ -10,4 +10,4 @@ reproducer:
   command: docker run dvra-miri:local sh tools/miri-reproduce.sh DVRA-008
 expected_signal: Miri reports Undefined Behavior after callback panic.
 public_goal: Show that a callback panic can skip repair of an unsafe collection invariant.
-private_truth: withheld
+benchmark_oracle: instructor-oracle/scenarios.yaml

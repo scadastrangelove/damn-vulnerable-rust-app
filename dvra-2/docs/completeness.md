@@ -14,8 +14,8 @@ complete now and what is intentionally deferred to later lab versions.
 | Panic-safety unsafe collection exercise | `DVRA-008`, `crates/unsafe-cache`, `tools/miri-reproduce.sh` |
 | Invalid `Send`/`Sync` exercise | `DVRA-009`, `crates/unsafe-cache`, Loom feature test |
 | Reachability/false-positive pair | `DVRA-013`, `DVRA-014`, `apps/api`, `crates/worker-engine` |
-| Public scenario metadata without answers | `scenarios/public/*.yaml`, `private_truth: withheld` |
-| Private oracle pattern | `docs/private-oracle.md`, `docs/private-oracle.schema.example.yaml`, ignored `instructor-oracle/` |
+| Public scenario metadata separated from labels | `scenarios/public/*.yaml`, `benchmark_oracle: instructor-oracle/scenarios.yaml` |
+| Benchmark oracle | `instructor-oracle/scenarios.yaml`, `docs/benchmark-oracle.md`, `docs/private-oracle.schema.example.yaml` |
 | Isolated runtime path | `infrastructure/compose.yaml`, Dockerfiles, direct Docker commands in `docs/verification.md` |
 | External-history labs excluded from root workspace | `labs/*/README.md`, workspace `exclude` |
 
@@ -56,6 +56,5 @@ Run:
 cargo run -p dvra-labctl -- audit
 ```
 
-The audit checks that required public manifests, docs, fixtures, Dockerfiles,
-and excluded lab placeholders exist and that public manifests keep private truth
-withheld.
+The audit checks that required public manifests, benchmark oracle, docs,
+fixtures, Dockerfiles, and excluded lab placeholders exist.

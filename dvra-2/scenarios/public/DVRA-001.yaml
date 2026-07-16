@@ -13,4 +13,4 @@ reproducer:
   command: cargo run -p dvra-labctl -- reproduce DVRA-001
 expected_signal: Cross-tenant artifact read returns HTTP 200 in tests and runtime.
 public_goal: Prove whether an authenticated tenant can read another tenant's artifact.
-private_truth: withheld
+benchmark_oracle: instructor-oracle/scenarios.yaml

@@ -63,5 +63,6 @@ Before cutting a lab release:
 1. Run the local commands above.
 2. Run the direct Docker commands or Compose commands from `docs/verification.md`.
 3. Confirm `cargo run -p dvra-labctl -- audit` passes after any scenario change.
-4. Confirm `scenarios/public` still contains no private truth table.
-5. Record tool versions in the private oracle.
+4. Confirm `scenarios/public` links to `instructor-oracle/scenarios.yaml`
+   instead of duplicating labels inline.
+5. Record tool versions in the benchmark oracle or release notes.

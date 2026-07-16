@@ -12,4 +12,4 @@ reproducer:
   command: cargo run -p dvra-labctl -- reproduce DVRA-006
 expected_signal: Fast parser panics after raw validation and normalization.
 public_goal: Find an input where raw validation offsets are reused after normalization.
-private_truth: withheld
+benchmark_oracle: instructor-oracle/scenarios.yaml

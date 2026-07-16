@@ -10,4 +10,4 @@ reproducer:
   command: docker run dvra-miri:local sh tools/miri-reproduce.sh DVRA-013
 expected_signal: Miri reports Undefined Behavior when the decoder is called directly; the HTTP route remains 404.
 public_goal: Separate a real local unsafe defect from production API reachability.
-private_truth: withheld
+benchmark_oracle: instructor-oracle/scenarios.yaml

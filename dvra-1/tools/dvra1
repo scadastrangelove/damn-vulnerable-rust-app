@@ -79,7 +79,7 @@ audit() {
   ensure_public_index
   package_learner >/dev/null
   test -s "$DIST/dvra-1-learner.tar.gz"
-  echo "ok: dvra-1 layout, public/private split, and learner bundle audit"
+  echo "ok: dvra-1 layout, scenario/oracle split, and learner bundle audit"
 }
 
 cmd="${1:-}"

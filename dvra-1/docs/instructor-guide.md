@@ -4,7 +4,8 @@
 
 1. Give learners either `source/` or `dist/dvra-1-learner.tar.gz`.
 2. Give them `scenarios/public/index.toml`.
-3. Do not give them `instructor-oracle/`.
+3. For benchmark evaluation, publish `instructor-oracle/` as the gold-label
+   reference. For challenge-style classroom use, hold it back until grading.
 4. Ask for one note per scenario:
    - verdict under the stated threat model;
    - evidence and exact location;
@@ -12,7 +13,7 @@
    - impact argument;
    - proposed patch or proof of non-finding;
    - regression test idea.
-5. Grade against `instructor-oracle/MANIFEST.toml` and
+5. Grade or score against `instructor-oracle/MANIFEST.toml` and
    `instructor-oracle/ANSWER_KEY.md`.
 
 ## Scoring emphasis
@@ -34,10 +35,11 @@ Penalize:
 - reporting a pattern without a concrete attack path or invariant violation;
 - claiming tool behavior without pinning the toolchain/configuration.
 
-## Public/private split
+## Scenario/oracle split
 
-The public scenario index intentionally omits the truth fields that make the
-exercise trivial. The oracle files should stay instructor-only:
+The public scenario index intentionally omits verdict fields so tools and
+reviewers can run against prompts without accidentally reading labels. The
+benchmark oracle is published separately:
 
 - `instructor-oracle/MANIFEST.toml`
 - `instructor-oracle/ANSWER_KEY.md`

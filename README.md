@@ -15,11 +15,13 @@ builder.
 
 | Path | Role | Status |
 | --- | --- | --- |
-| `dvra-1/` | Compact code-review benchmark with many planted findings, decoys, and public scenario prompts. Private truth is kept outside git. | Imported as implementation 1 |
+| `dvra-1/` | Compact code-review benchmark with many planted findings, decoys, public scenario prompts, and a gold oracle. | Imported as implementation 1 |
 | `dvra-2/` | Realistic artifact-processing service/lab with API, worker, fuzzing, Loom, Miri, and Docker isolation. | Imported as implementation 2 |
-| `dvra-3/` | Application lab `0.2.0-alpha.2` with Axum API, SSRF/internal metadata lab, bundle traversal, fuzz/Miri/Loom scenarios, and public scenarios. Private truth is kept outside git. | Imported as implementation 3 |
+| `dvra-3/` | Application lab `0.2.0-alpha.2` with Axum API, SSRF/internal metadata lab, bundle traversal, fuzz/Miri/Loom scenarios, public scenarios, and a gold oracle. | Imported as implementation 3 |
 | `tools/dvra-docker` | Root Docker/Compose facade for all implementations. | Shared helper |
 | `rust-security-code-review-canonical_1.md` | Shared reference/checklist for Rust security review methodology. | Reference material |
+
+See `BENCHMARK.md` for the published gold-label oracle locations.
 
 ## Shared Docker facade
 
@@ -42,12 +44,12 @@ remain explicit (`dvra-1 test-ffi`, `dvra-2 miri-008`, `dvra-2 miri-013`,
 
 ## Implementation 1
 
-`dvra-1` is a compact review benchmark with an explicit public/private split:
+`dvra-1` is a compact review benchmark with an explicit learner/gold-label split:
 
 - `source/` contains the learner-facing Rust crate;
 - `scenarios/public/index.toml` contains learner-facing scenario prompts;
-- private truth, if used by a course, belongs outside git under
-  `instructor-oracle/`;
+- `instructor-oracle/MANIFEST.toml` and `instructor-oracle/ANSWER_KEY.md`
+  publish the benchmark gold labels;
 - `tools/dvra1` builds learner-safe bundles and audits the layout;
 - `infrastructure/compose.yaml` runs the default test/audit gates in an
   isolated container.
@@ -94,8 +96,7 @@ Compose available.
 - `apps/api` and `apps/metadata-service`;
 - `crates/*` for config, bundle parsing, fetch/SSRF, parser, and unsafe-cache;
 - `scenarios/public` for learner-facing descriptions;
-- private truth, if used by a course, belongs outside git under
-  `instructor-oracle/`;
+- `instructor-oracle/scenarios.yaml` publishes the benchmark gold labels;
 - `scripts/labctl` for doctor/layout/test/fuzz/miri/loom/reproducers;
 - `infrastructure/compose*.yaml` for isolated SSRF/runtime profiles.
 
@@ -117,8 +118,9 @@ Docker workflows.
 
 All three implementations follow the same high-level rules:
 
-- learner-facing public metadata must not disclose private truth;
-- answer keys, exploit harnesses, and grading oracles are instructor-only;
+- learner-facing scenario metadata and benchmark gold labels are separate files;
+- planted defects, decoys, reachability labels, and expected tool signals are
+  intentionally published for benchmark use;
 - every implementation needs a clear reproducer and verification story;
 - dangerous runtime paths need explicit gates and a Docker/disposable execution
   path;

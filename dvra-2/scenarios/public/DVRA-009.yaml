@@ -10,4 +10,4 @@ reproducer:
   command: cargo run -p dvra-labctl -- reproduce DVRA-009
 expected_signal: Loom reports concurrent access to UnsafeCell.
 public_goal: Model concurrent access to a non-atomic shared counter.
-private_truth: withheld
+benchmark_oracle: instructor-oracle/scenarios.yaml

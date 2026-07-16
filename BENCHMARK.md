@@ -1,0 +1,23 @@
+# Benchmark oracle
+
+DVRA is published as a benchmark, not only as a challenge repository. The
+planted defects, decoys, reachability labels, threat-model notes, and expected
+tool signals are intentionally available in the repository.
+
+Gold-label locations:
+
+- `dvra-1/instructor-oracle/MANIFEST.toml` — machine-readable finding map.
+- `dvra-1/instructor-oracle/ANSWER_KEY.md` — reviewer-oriented answer key.
+- `dvra-2/instructor-oracle/scenarios.yaml` — scenario truth table.
+- `dvra-3/instructor-oracle/scenarios.yaml` — scenario truth table.
+
+The learner-facing scenario files remain separate from the oracle files so tools
+can be evaluated in two modes:
+
+1. **Blind/challenge mode:** run a tool or reviewer against source plus public
+   scenario prompts only.
+2. **Benchmark mode:** compare reported findings against the oracle files.
+
+For classroom challenge use, distribute a branch or archive that omits
+`instructor-oracle/`. For benchmark publication, keep the oracles visible so
+results can be reproduced and scored.

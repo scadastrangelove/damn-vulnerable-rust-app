@@ -11,15 +11,15 @@ and threat-model-dependent cases in one small review target.
 - `source/`: canonical learner-facing Rust crate.
 - `scenarios/public/index.toml`: public scenario index without verdicts,
   vulnerable lines, concrete triggers, or fixes.
-- `instructor-oracle/`: private truth files for instructors and graders.
+- `instructor-oracle/`: benchmark gold labels and reviewer notes.
 - `tools/dvra1`: small lab helper for unpacking, testing, packaging, and audit.
 - `infrastructure/compose.yaml`: containerized test/audit/FFI gates.
 - `build.rs`, `records.rs`: standalone review excerpts retained from the
   original bundle.
 
-The canonical source of truth for development is `source/`. The instructor truth
-is deliberately outside that tree. Generated learner bundles are written to
-`dist/`, which is intentionally ignored by git.
+The canonical source of truth for development is `source/`. Benchmark labels
+are deliberately outside that learner tree. Generated learner bundles are
+written to `dist/`, which is intentionally ignored by git.
 
 ## Intended use
 
@@ -29,7 +29,8 @@ Give learners `source/` or a bundle produced by:
 ./tools/dvra1 package-learner
 ```
 
-Do not give learners `instructor-oracle/`.
+For benchmark evaluation, use `instructor-oracle/` as the gold-label reference.
+For challenge-style classroom use, distribute only the learner bundle.
 
 ## Quick start
 

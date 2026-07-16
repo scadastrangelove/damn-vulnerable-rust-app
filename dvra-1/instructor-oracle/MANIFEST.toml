@@ -1,0 +1,358 @@
+# Machine-readable finding map for the Damn Vulnerable Rust target.
+#
+# One [[finding]] per planted issue. Fields:
+#   id                     stable identifier
+#   feature                module under src/features/
+#   file, vuln_line        location of the primary defect
+#   cwe                    CWE identifier
+#   category               taxonomy bucket (see below)
+#   reachable              true  = exploitable from a routed request under the
+#                                  stated threat model
+#                          false = decoy: not on the attacker path
+#                          cond  = depends on threat-model assumptions
+#   static_visible         a competent grep/SAST pass flags the *pattern*
+#   fuzz_visible           a fuzzer/Miri triggers it; static triage does not
+#   panic                  triggering it aborts the request/process
+#   fixed_fn               the hardened counterpart in the same module
+#   doc_ref                section of "Rust Security Code Review — Canonical"
+#
+# Categories:
+#   reachable-real          genuinely exploitable
+#   decoy-unreachable       looks vulnerable, is not on the path
+#   fuzz-only               static-clean, needs fuzzing/Miri to see
+#   threat-model-dependent  a finding only under certain trust assumptions
+
+target = "damn-vulnerable-rust"
+not_for_production = true
+
+[[finding]]
+id = "DVR-01-SQLI"
+feature = "user_search"
+file = "src/features/user_search.rs"
+vuln_line = 11
+cwe = "CWE-89"
+category = "reachable-real"
+reachable = true
+static_visible = true
+fuzz_visible = false
+panic = false
+fixed_fn = "fixed_handle"
+doc_ref = "§5 (injection), §6 (validated vs raw types)"
+note = "username interpolated into query text; ' OR '1'='1 returns all rows."
+
+[[finding]]
+id = "DVR-02-PATH-TRAVERSAL"
+feature = "file_download"
+file = "src/features/file_download.rs"
+vuln_line = 17
+cwe = "CWE-22"
+category = "reachable-real"
+reachable = true
+static_visible = true
+fuzz_visible = false
+panic = false
+fixed_fn = "fixed_handle"
+doc_ref = "§5 (files: ../, canonicalization, TOCTOU)"
+note = "base.join(client_name); ../ escapes upload_dir. Even fixed_handle only does lexical containment — symlink/TOCTOU note in ANSWER_KEY; robust fix is generated id (upload::fixed_store)."
+
+[[finding]]
+id = "DVR-03-IDOR"
+feature = "documents"
+file = "src/features/documents.rs"
+vuln_line = 17
+cwe = "CWE-639"
+category = "reachable-real"
+reachable = true
+static_visible = false   # no obvious sink token; needs authz reasoning
+fuzz_visible = false
+panic = false
+fixed_fn = "fixed_handle"
+doc_ref = "§6 (authorization at the side effect; object-level, deny-by-default)"
+note = "Object fetched by id with no ownership check. Role != per-object rights."
+
+[[finding]]
+id = "DVR-04-UTF8-PANIC"
+feature = "header_parse"
+file = "src/features/header_parse.rs"
+vuln_line = 17
+cwe = "CWE-248"        # uncaught exception / reachable panic (DoS)
+category = "fuzz-only"
+reachable = true
+static_visible = false
+fuzz_visible = true
+panic = true
+fixed_fn = "fixed_handle"
+doc_ref = "§3.1 (string slicing on non-UTF-8 char boundary)"
+note = "&value[..16] panics when byte 16 is inside a multi-byte char. No unwrap, no unsafe — invisible to grep triage."
+
+[[finding]]
+id = "DVR-05-LEN-UNDERFLOW"
+feature = "framing"
+file = "src/features/framing.rs"
+vuln_line = 21
+cwe = "CWE-191"        # integer underflow
+category = "fuzz-only"
+reachable = true
+static_visible = false
+fuzz_visible = true
+panic = true           # debug; release wraps to a huge len (quieter bug)
+fixed_fn = "fixed_handle"
+doc_ref = "§3.3 (offset/length arithmetic; a < len - b traps), §4 (as-cast)"
+note = "declared as usize - HEADER underflows when declared < 4. Debug: panic. Release: wrap to ~usize::MAX. Illustrates why debug builds are not a DoS test."
+
+[[finding]]
+id = "DVR-06-ALLOC-DOS"
+feature = "upload"
+file = "src/features/upload.rs"
+vuln_line = 23
+cwe = "CWE-770"        # allocation without limits
+category = "reachable-real"
+reachable = true
+static_visible = true   # with_capacity(client_value) is a recognizable pattern
+fuzz_visible = false
+panic = false           # OOM/abort rather than a clean panic
+fixed_fn = "fixed_handle"
+doc_ref = "§3.1 (allocations sized by input; decompression/zip bombs)"
+note = "Vec::with_capacity(declared) from x-declared-size; plus x-repeat expansion. Unbounded."
+
+[[finding]]
+id = "DVR-07-DECOY-UNSAFE"
+feature = "native"
+file = "src/features/native.rs"
+vuln_line = 24
+cwe = "CWE-843"        # type confusion (if it were reachable)
+category = "decoy-unreachable"
+reachable = false
+static_visible = true   # grep for `unsafe` flags it loudly
+fuzz_visible = false
+panic = false
+fixed_fn = ""
+doc_ref = "§1 (review prioritization / reachability), §2 (unsafe triage)"
+note = "Unsound as_u32_slice (alignment + tail), but native::handle is never wired into App::handle. Correct verdict: dead code, remove — NOT a reachable critical. Trains reachability discipline."
+
+[[finding]]
+id = "DVR-08-DECOY-UNWRAP"
+feature = "validation"
+file = "src/features/validation.rs"
+vuln_line = 25
+cwe = "CWE-248"
+category = "decoy-unreachable"
+reachable = false
+static_visible = true   # grep for `.unwrap(` flags it
+fuzz_visible = false
+panic = false           # guards make the unwrap unreachable
+fixed_fn = ""
+doc_ref = "§3.1 (unwrap allowed only with a documented unreachability proof)"
+note = "raw.parse().unwrap() is preceded by all-ASCII-digit + length<=19 guards, so it cannot fire. Correct verdict: safe as written (document the invariant); not a bug."
+
+[[finding]]
+id = "DVR-09-HOOK-CONFIG"
+feature = "hooks"
+file = "src/features/hooks.rs"
+vuln_line = 33
+cwe = "CWE-78"         # OS command injection (conditionally)
+category = "threat-model-dependent"
+reachable = "cond"
+static_visible = true   # shell string construction is visible
+fuzz_visible = false
+panic = false
+fixed_fn = "fixed_handle"
+doc_ref = "§1 (threat model, trust boundaries), §5 (command execution)"
+note = "Command comes from Config (operator-controlled file), not the request. Benign IF config is trusted and static. Becomes RCE if (a) command templates request data ($ARG), (b) config source becomes attacker-influenced, or (c) hook is reachable from PublicEdge. Verdict depends on README threat model."
+
+[[finding]]
+id = "DVR-10-SECRET-LOG"
+feature = "auth"
+file = "src/features/auth.rs"
+vuln_line = 25
+cwe = "CWE-532"        # insertion of sensitive info into log
+category = "reachable-real"
+reachable = true
+static_visible = true
+fuzz_visible = false
+panic = false
+fixed_fn = "fixed_handle"
+doc_ref = "§10 (secrets: not in logs; check derives)"
+note = "audit_log includes the presented token verbatim."
+
+[[finding]]
+id = "DVR-11-TIMING-EQ"
+feature = "auth"
+file = "src/features/auth.rs"
+vuln_line = 30
+cwe = "CWE-208"        # observable timing discrepancy
+category = "reachable-real"
+reachable = true
+static_visible = false  # `==` on secrets is easy to miss
+fuzz_visible = false
+panic = false
+fixed_fn = "fixed_handle"
+doc_ref = "§10 (constant-time comparison for secrets; use subtle)"
+note = "presented == EXPECTED_TOKEN is a non-constant-time compare of a secret. Subtle; not a grep hit."
+
+[[finding]]
+id = "DVR-12-PARSER-DIFFERENTIAL"
+feature = "proxy"
+file = "src/features/proxy.rs"
+vuln_line = 48
+cwe = "CWE-436"        # interpretation conflict (parser differential)
+category = "reachable-real"
+reachable = true
+static_visible = false  # needs reasoning about two normalizers, not a token
+fuzz_visible = true     # a differential/invariant fuzz target finds it fast
+panic = false
+fixed_fn = "fixed_handle"
+doc_ref = "§9 (parser differentials as a security invariant), §1 (trust boundaries)"
+note = "Guard (waf_allows) decodes once; backend (backend_effective_path) decodes twice. A double-encoded path like %252fadmin%252fkeys is ALLOWED by the guard but resolves to /admin at the backend. The deploy-gate invariant is parser_equivalence_holds(); the fixed version canonicalizes once and uses ONE form for decision and resolution. This is the WAF-bypass class the edge/backend split must defend against."
+
+[[finding]]
+id = "DVR-13-HIGHER-ORDER-INVARIANT"
+feature = "collect"
+file = "src/features/collect.rs"
+vuln_line = 35
+cwe = "CWE-125"        # out-of-bounds read
+category = "fuzz-only" # UB: visible under Miri/ASan, NOT via plain cargo test or grep
+reachable = true       # advertised_len is request-controlled (x-len header)
+static_visible = false
+fuzz_visible = true    # Miri catches deterministically; fuzz+ASan finds it
+panic = false          # UB, not a guaranteed panic
+fixed_fn = "read_all_safe / fixed_handle"
+doc_ref = "§2.3 item 12 (higher-order invariants: never trust a safe trait), §7"
+note = "read_all() builds a slice from a source's data ptr and its advertised_len, trusting the ByteSource contract that advertised_len <= data.len(). RequestSource takes advertised_len from the attacker-controlled x-len header. A lying length is an OOB read. The unsafe must hold for EVERY impl of the safe trait, not just honest ones. Largest class of stdlib soundness CVEs (Rudra pattern #1). Run: cargo +nightly miri test."
+
+[[finding]]
+id = "DVR-14-UNBOUNDED-RECURSION"
+feature = "nested"
+file = "src/features/nested.rs"
+vuln_line = 20
+cwe = "CWE-674"        # uncontrolled recursion
+category = "fuzz-only"
+reachable = true
+static_visible = false
+fuzz_visible = true    # trophy-case category `so`; found in seconds
+panic = true           # stack overflow -> process abort (not a catchable panic)
+fixed_fn = "fixed_handle"
+doc_ref = "§3.1 (recursion with attacker-controlled depth; serde/parsers do not bound depth)"
+note = "parse_group recurses once per '[' with no depth limit. A deeply nested expr overflows the stack -> SIGABRT/SIGSEGV, a DoS on a shared process. Cannot be a #[should_panic] test (aborts the runner). fixed_handle bounds depth at MAX_DEPTH."
+
+[[finding]]
+id = "DVR-15-SEND-BOUND"
+feature = "concurrency"
+file = "src/features/concurrency.rs"
+vuln_line = 35
+cwe = "CWE-362"        # concurrent execution / data race
+category = "fuzz-only" # data race: TSan/Miri, NOT plain cargo test or grep
+reachable = true       # latent: any downstream that wraps a !Send type
+static_visible = false # `unsafe impl Send` greps, but the WRONG BOUND is the bug
+fuzz_visible = true    # ThreadSanitizer / Miri-many-seeds
+panic = false          # UB (data race), not a panic
+fixed_fn = "SharedSafe (T: Send + Sync bound)"
+doc_ref = "§8 (Send/Sync generic bounds; unsafe traits), §2.3 item 12"
+note = "unsafe impl<T> Send for Shared<T> {} has NO bound, so a !Send interior (Rc, Cell, raw ptr) can cross threads and race non-atomic state. Rudra pattern #3; the stdlib itself shipped this (MutexGuard<Cell<i32>>: Sync, CVE-2017-20004). The request path wraps a Send payload so it does not race there — the defect is the impl's missing bound. Run the race-demo test under TSan: RUSTFLAGS=-Zsanitizer=thread cargo +nightly test --features race-demo."
+
+# --- FFI tier: only present with --features ffi ---
+
+[[finding]]
+id = "DVR-16-FFI-UNWIND"
+feature = "ffi"
+file = "src/features/ffi.rs"
+vuln_line = 45
+cwe = "CWE-248"        # uncaught exception across ABI (abort/UB)
+category = "reachable-real"
+reachable = true       # any body not starting with '{'
+static_visible = false
+fuzz_visible = true    # trivially fuzzable: first byte != '{'
+panic = true           # panic unwinds through the C frame -> abort (worker crash)
+fixed_fn = "body_cb_fixed (catch_unwind)"
+doc_ref = "§7 (no unwind across FFI; catch_unwind or extern C-unwind)"
+note = "body_cb is an extern \"C\" callback handed to host_dispatch (a C frame). On invalid body it panics; unwinding through C with the plain C ABI aborts the process. Confirmed empirically: exit 101 through the C frame. This is the nginx/Pingora worker-crash class. Fix: catch_unwind at the boundary."
+
+[[finding]]
+id = "DVR-17-FFI-REFCOUNT-LEAK"
+feature = "ffi"
+file = "src/features/ffi.rs"
+vuln_line = 78
+cwe = "CWE-772"        # missing release of resource
+category = "reachable-real"
+reachable = true       # empty body triggers the early-return path
+static_visible = false # requires tracing every exit path for the decrement
+fuzz_visible = false
+panic = false
+fixed_fn = "handle_request_fixed (RAII RefGuard)"
+doc_ref = "§7 (host-runtime lifecycle invariants; test every exit path incl. error paths)"
+note = "handle_request increments the host request refcount (host_ref) but the empty-body early return skips the decrement, so the host never sees count==0 and the request leaks forever. This is exactly the nginx r->main->count class from the canonical doc. Fix: a Drop guard that decrements on every exit path, including panic/unwind. Tests verify count==1 (leaked) on the vulnerable path and count==0/completed==1 on the fixed path."
+
+[[finding]]
+id = "DVR-18-FFI-UNTRUSTED-LEN"
+feature = "ffi"
+file = "src/features/ffi.rs"
+vuln_line = 120
+cwe = "CWE-125"        # out-of-bounds read
+category = "fuzz-only" # UB via Miri/ASan; not a guaranteed panic
+reachable = true       # x-c-len header stands in for the C-supplied length
+static_visible = false
+fuzz_visible = true    # Miri/ASan
+panic = false
+fixed_fn = "read_c_buffer_fixed (clamp to actual_len)"
+doc_ref = "§7 (lengths from C are untrusted; validate before from_raw_parts)"
+note = "read_c_buffer feeds a C-declared length straight into slice::from_raw_parts, ignoring the actual buffer length -> OOB read when declared > actual. Fix: min(declared, actual). Miri catches it (does not run the C shim): cargo +nightly miri test --features ffi read_c_buffer_ub."
+
+[[finding]]
+id = "DVR-19-HASH-DOS"
+feature = "dedup"
+file = "src/features/dedup.rs"
+vuln_line = 48
+cwe = "CWE-407"        # inefficient algorithmic complexity
+category = "threat-model-dependent"
+reachable = true       # keys are request-derived
+static_visible = false # a custom hasher is not inherently a bug; the KEY SOURCE is
+fuzz_visible = false
+panic = false
+fixed_fn = "fixed_handle (default SipHash)"
+doc_ref = "§3.2 (hash-DoS; swapping SipHash for a fast hasher on attacker keys)"
+note = "HashMap built with a custom seedless multiplicative hasher, keyed by request lines. Because the hash is a public, unseeded pure function, an attacker precomputes colliding keys offline -> O(n^2) insertion -> CPU DoS. Threat-model-dependent: a fast hasher is fine for TRUSTED keys; the finding is that these keys come from the request. Fix: std default (randomized SipHash) for attacker-controlled keys."
+
+[[finding]]
+id = "DVR-20-PANIC-SAFETY-UAF"
+feature = "records"
+file = "src/features/records.rs"
+vuln_line = 43
+cwe = "CWE-416"        # use-after-free / invalid drop
+category = "fuzz-only" # UB on the panic path; Miri, not plain cargo test or grep
+reachable = true       # a '!'-prefixed line triggers the panic path
+static_visible = false
+fuzz_visible = true    # Miri
+panic = true           # the trigger IS a panic; the bug is what unwinding does
+fixed_fn = "build_fixed (push only initialized elements)"
+doc_ref = "§2.3 item 8 (panic safety in unsafe: no observable invalid state on unwind)"
+note = "build() calls Vec::set_len(n) before writing the elements, so the Vec claims n initialized Records over uninitialized slots. If parse() panics partway (a '!'-line via .expect), the Vec is dropped during unwinding and runs Record::drop over uninitialized memory (invalid String -> wild free). Rudra pattern #1. Happy path (no rejected line) works, hiding it. Fix: push only initialized elements; propagate errors with ?. Run: cargo +nightly miri test records."
+
+[[finding]]
+id = "DVR-21-MASS-ASSIGNMENT"
+feature = "profile"
+file = "src/features/profile.rs"
+vuln_line = 93
+cwe = "CWE-915"        # improperly controlled modification of object attributes
+category = "reachable-real"
+static_visible = false # requires seeing that is_admin/role are client-settable
+fuzz_visible = false
+reachable = true
+panic = false
+fixed_fn = "apply_fixed / fixed_handle (allow-list)"
+doc_ref = "§6 (mass assignment via deserialization; privileged fields from JSON)"
+note = "apply() updates every field named in the request body, including is_admin and role, so a profile update is privilege escalation. No serde: a hand-rolled flat-JSON parser makes the sink explicit. Fix: allow-list the user-settable fields (apply_fixed); never source privileged fields from the request."
+
+[[finding]]
+id = "DVR-22-BUILDRS-DECOY"
+feature = "build.rs"
+file = "build.rs"
+vuln_line = 43
+cwe = "CWE-506"        # embedded malicious code (the class it MIMICS)
+category = "decoy-unreachable"   # looks like supply-chain malware; is benign
+reachable = false      # no exfiltration, no network, no external process
+static_visible = true  # env reads + fs I/O in a build script grep loudly
+fuzz_visible = false
+panic = false
+fixed_fn = ""
+doc_ref = "§11.3 (build.rs runs arbitrary code at build time; audit as executable)"
+note = "emit_build_metadata reads only Cargo-set build-scoped env vars (PROFILE, TARGET) and writes ONLY into OUT_DIR. It looks alarming (env + fs I/O in a build script) but does not exfiltrate, reach the network, or spawn a process. Correct verdict: benign as written; NOT a finding to escalate. The real, standing point is that a build script CAN do those things (cf. crates.io build.rs malware) and must be audited as executable code every time. Flagging this instance as active malware is the false positive; failing to note the capability-level risk is the other failure mode."
