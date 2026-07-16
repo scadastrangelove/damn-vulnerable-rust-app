@@ -1,10 +1,27 @@
-# DVRA implementation 1
+# DVRA-1: compact code-review benchmark
 
-This directory contains the first DVRA implementation: a compact Rust security
-code-review benchmark.
+DVRA-1 is a compact Rust security code-review benchmark. It is intentionally
+not a live web service: the application surface is a std-only request router
+with feature modules that model common service routes and review targets.
 
 Its value is density: many planted issues, decoys, tool-visibility differences,
 and threat-model-dependent cases in one small review target.
+
+## Application surface
+
+The learner-facing crate models an internal service with routes for:
+
+- user search and data-access review;
+- document object access and tenant/owner authorization;
+- file download/upload path handling;
+- proxy/path parsing and parser differentials;
+- request validation, framing, header parsing, and nested input parsing;
+- auth token handling and logging;
+- hook execution driven by configuration;
+- unsafe, concurrency, panic-safety, build-script, and optional FFI review.
+
+It contains 22 gold-labeled findings spanning reachable vulnerabilities,
+decoys, fuzz/Miri-only cases, and threat-model-dependent behavior.
 
 ## Canonical layout
 

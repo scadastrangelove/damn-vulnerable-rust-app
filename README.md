@@ -1,9 +1,10 @@
-# DVRA implementations
+# Damn Vulnerable Rust Application (DVRA)
 
-This directory collects multiple implementations of Damn Vulnerable Rust
-Application in one place. The goal is to keep a shared security-training and QA
-contract while allowing each implementation to have a different scale and
-teaching role.
+This repository contains three Rust security benchmark implementations under a
+shared DVRA contract. Each implementation models a deliberately vulnerable
+artifact-processing application, but at a different scale: from a dense
+std-only code-review target to fuller Axum web labs with Docker, Miri, Loom,
+fuzzing, and SSRF profiles.
 
 All implementations are deliberately vulnerable. Do not run them as public
 services, attach real secrets, mount home directories, expose SSH/GPG agents, or
@@ -123,7 +124,7 @@ Compose available.
 
 ## Implementation 3
 
-`dvra-3` is another workspace implementation, closer to a full application lab:
+`dvra-3` is a fuller Axum application lab:
 
 - `apps/api` is an Axum web API with vulnerable and fixed comparison routes.
 - Tenants can read artifacts, submit bundles, trigger parser paths, run gated
@@ -176,9 +177,6 @@ Sergey Gordeychik
 - Blog: [scadastrangelove.blogspot.com](https://scadastrangelove.blogspot.com/)
 
 Issues and pull requests are welcome.
-
-For the upstream C/C++ reference pipeline, see
-[anthropics/defending-code-reference-harness](https://github.com/anthropics/defending-code-reference-harness).
 
 ## License
 

@@ -1,12 +1,31 @@
-# Damn Vulnerable Rust Application
+# DVRA-2: artifact-processing service lab
 
-DVRA is a deliberately vulnerable Rust lab for learning the difference between
-a suspicious code pattern, a real local defect, and an application vulnerability
-that is built, reachable, attacker-controlled, and impactful.
+DVRA-2 is a deliberately vulnerable Rust artifact-processing service. It is a
+workspace lab with an Axum API, an offline worker, reusable crates, public
+scenario manifests, a published benchmark oracle, Docker profiles, and Miri/Loom
+reproducers.
 
-This repository is intentionally unsafe. Do not deploy it on a public network,
+This implementation is intentionally unsafe. Do not deploy it on a public network,
 do not run the worker against untrusted local files, and do not copy vulnerable
 patterns into production code.
+
+## Application surface
+
+The lab models a service where tenants access project artifacts, workers process
+uploaded files, configuration can control post-processing, and isolated helper
+services support network/security exercises.
+
+The main components are:
+
+- `apps/api`: tenant/project artifact API plus an intentionally unregistered
+  legacy decoder.
+- `apps/worker`: offline artifact worker constrained to `/tmp/dvra`.
+- `apps/mock-metadata-service`: fake metadata endpoint for isolated lab
+  networks.
+- `crates/binary-parser`: parser/normalizer mismatch target.
+- `crates/unsafe-cache`: panic-safety and invalid `Send`/`Sync` labs.
+- `crates/worker-engine`: command execution and false-positive process-spawn
+  cases.
 
 ## What is included
 

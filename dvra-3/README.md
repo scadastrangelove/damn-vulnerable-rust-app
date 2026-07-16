@@ -1,8 +1,8 @@
-# Damn Vulnerable Rust Application (DVRA)
+# DVRA-3: Axum web application lab
 
-DVRA `0.2.0-alpha.2` is a deliberately vulnerable Rust application for security
-code review, SAST/DAST evaluation, fuzzing, Miri, Loom, threat-model analysis,
-and reachability reasoning.
+DVRA-3 `0.2.0-alpha.2` is a deliberately vulnerable Axum web application for
+security code review, SAST/DAST evaluation, fuzzing, Miri, Loom, threat-model
+analysis, and reachability reasoning.
 
 > **Safety warning**
 >
@@ -10,6 +10,23 @@ and reachability reasoning.
 > races, denial-of-service conditions, and vulnerable-looking decoys. Run it only
 > in a disposable local container or VM. Never expose it to an untrusted network,
 > mount host secrets, pass cloud credentials, or run it as root.
+
+## Application surface
+
+DVRA-3 models a multi-tenant artifact service. Tenants can read artifacts,
+submit bundles for extraction, send parser inputs, trigger gated
+post-processing, and ask the service to fetch URLs. The lab also includes an
+internal fake metadata service for SSRF exercises.
+
+The application is split into:
+
+- `apps/api`: Axum API with vulnerable and fixed comparison routes;
+- `apps/metadata-service`: fake internal metadata service;
+- `crates/bundle`: bundle extraction and path traversal;
+- `crates/fetch`: HTTP client, redirect handling, and egress policy;
+- `crates/parser`: vulnerable and reference binary parsers;
+- `crates/config`: configuration and command-execution scenarios;
+- `crates/unsafe-cache`: panic-safety and concurrency soundness labs.
 
 ## What makes DVRA different
 
