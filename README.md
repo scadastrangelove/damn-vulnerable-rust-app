@@ -11,6 +11,23 @@ mount the Docker socket. Heavy Docker, Miri, fuzzing, and sanitizer gates should
 run only in disposable environments, such as a local VM or a throwaway remote
 builder.
 
+## Application model
+
+DVRA models an artifact-processing platform: tenants own projects, upload or
+fetch artifacts, parse custom binary records, run worker-side post-processing,
+and interact with internal services such as fake metadata endpoints. That shape
+is intentionally broad enough to exercise both ordinary web security and
+Rust-specific review skills:
+
+- multi-tenant authorization and object ownership;
+- parser/validator disagreements and fuzzing targets;
+- filesystem and bundle extraction boundaries;
+- command execution controlled by configuration or tenant input;
+- HTTP fetching, redirects, and SSRF;
+- unsafe-code invariants, panic safety, `Send`/`Sync`, Miri, and Loom;
+- false positives where suspicious code is safe, dead, or not
+  attacker-controlled.
+
 ## Repository map
 
 | Path | Role | Status |
@@ -46,6 +63,11 @@ remain explicit (`dvra-1 test-ffi`, `dvra-2 miri-008`, `dvra-2 miri-013`,
 
 `dvra-1` is a compact review benchmark with an explicit learner/gold-label split:
 
+- It is a small std-only request router, not a live web server.
+- The domain is an internal service with routes for user search, document
+  access, file download/upload, proxying, parsing, auth, hooks, and optional FFI.
+- It is dense by design: 22 planted review cases include reachable bugs, decoys,
+  fuzz/Miri-only cases, and threat-model-dependent findings.
 - `source/` contains the learner-facing Rust crate;
 - `scenarios/public/index.toml` contains learner-facing scenario prompts;
 - `instructor-oracle/MANIFEST.toml` and `instructor-oracle/ANSWER_KEY.md`
@@ -66,8 +88,18 @@ cd dvra-1
 
 ## Implementation 2
 
-`dvra-2` is a workspace implementation with separate applications, crates,
-scenario manifests, Docker support, and QA documentation.
+`dvra-2` is a realistic artifact-processing service with separate applications,
+crates, scenario manifests, Docker support, and QA documentation.
+
+- `apps/api` exposes a tenant/project artifact API and an intentionally
+  unregistered legacy decoder.
+- `apps/worker` processes artifacts under an isolated `/tmp/dvra` work area.
+- `apps/mock-metadata-service` supports isolated network/security exercises.
+- The scenario set covers cross-tenant IDOR, config-dependent shell execution,
+  parser offset mismatch, panic-unsound unsafe collections, invalid `Send`/`Sync`,
+  an unreachable unsafe defect, and a fixed-program `Command::new` false
+  positive.
+- Heavy paths use Docker profiles and Miri/Loom reproducer commands.
 
 Main entry points:
 
@@ -93,12 +125,20 @@ Compose available.
 
 `dvra-3` is another workspace implementation, closer to a full application lab:
 
-- `apps/api` and `apps/metadata-service`;
-- `crates/*` for config, bundle parsing, fetch/SSRF, parser, and unsafe-cache;
-- `scenarios/public` for learner-facing descriptions;
-- `instructor-oracle/scenarios.yaml` publishes the benchmark gold labels;
-- `scripts/labctl` for doctor/layout/test/fuzz/miri/loom/reproducers;
-- `infrastructure/compose*.yaml` for isolated SSRF/runtime profiles.
+- `apps/api` is an Axum web API with vulnerable and fixed comparison routes.
+- Tenants can read artifacts, submit bundles, trigger parser paths, run gated
+  post-processing, and ask the service to fetch URLs.
+- `apps/metadata-service` is an internal fake cloud metadata service used by
+  the SSRF lab.
+- Crates split the app into config, bundle parsing, HTTP fetch policy, binary
+  parser, domain model, and unsafe-cache labs.
+- The scenario set covers IDOR, command injection, parser normalization bugs,
+  panic safety, invalid `Sync`, unreachable command injection, debug secret
+  logging, bundle traversal, and SSRF into fake metadata.
+- `scenarios/public` contains learner-facing descriptions;
+  `instructor-oracle/scenarios.yaml` publishes the benchmark gold labels.
+- `scripts/labctl` and `infrastructure/compose*.yaml` provide local,
+  Dockerized, and SSRF-profile workflows.
 
 Main entry points:
 
