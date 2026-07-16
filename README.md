@@ -30,13 +30,13 @@ Rust-specific review skills:
 
 ## Repository map
 
-| Path | Role | Status |
+| Path | What it models | Benchmark assets |
 | --- | --- | --- |
-| `dvra-1/` | Compact code-review benchmark with many planted findings, decoys, public scenario prompts, and a gold oracle. | Imported as implementation 1 |
-| `dvra-2/` | Realistic artifact-processing service/lab with API, worker, fuzzing, Loom, Miri, and Docker isolation. | Imported as implementation 2 |
-| `dvra-3/` | Application lab `0.2.0-alpha.2` with Axum API, SSRF/internal metadata lab, bundle traversal, fuzz/Miri/Loom scenarios, public scenarios, and a gold oracle. | Imported as implementation 3 |
-| `tools/dvra-docker` | Root Docker/Compose facade for all implementations. | Shared helper |
-| `rust-security-code-review-canonical_1.md` | Shared reference/checklist for Rust security review methodology. | Reference material |
+| `dvra-1/` | Compact std-only request router for dense code-review exercises: search, documents, file handling, parsing, auth, hooks, unsafe/FFI review. | 22 gold-labeled findings in `instructor-oracle/`; learner prompts in `scenarios/public/index.toml`; local and Docker audit gates. |
+| `dvra-2/` | Artifact-processing service with Axum API, offline worker, mock metadata service, parser crate, unsafe-cache labs, and Docker/Miri profiles. | Gold labels in `instructor-oracle/scenarios.yaml`; public YAML scenarios; `dvra-labctl` reproducers and audit. |
+| `dvra-3/` | Fuller Axum web lab with vulnerable/fixed comparison routes, bundle upload/extraction, URL fetch/SSRF, fake metadata, parser, and unsafe-cache scenarios. | Gold labels in `instructor-oracle/scenarios.yaml`; public Markdown scenarios; `labctl` reproducers and Compose SSRF profile. |
+| `tools/dvra-docker` | Repository-level Docker/Compose facade for running the three implementations consistently. | `config`, `build`, test, audit, Miri, and SSRF-profile commands. |
+| `rust-security-code-review-canonical_1.md` | Rust security-review checklist used as shared review vocabulary. | Reference material for manual review and rubric design. |
 
 See `BENCHMARK.md` for the published gold-label oracle locations.
 
