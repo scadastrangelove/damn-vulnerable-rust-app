@@ -8,7 +8,8 @@ teaching role.
 All implementations are deliberately vulnerable. Do not run them as public
 services, attach real secrets, mount home directories, expose SSH/GPG agents, or
 mount the Docker socket. Heavy Docker, Miri, fuzzing, and sanitizer gates should
-run in disposable environments, for example Tamm.
+run only in disposable environments, such as a local VM or a throwaway remote
+builder.
 
 ## Repository map
 
@@ -49,8 +50,7 @@ remain explicit (`dvra-1 test-ffi`, `dvra-2 miri-008`, `dvra-2 miri-013`,
   contain private truth;
 - `tools/dvra1` builds learner-safe bundles and audits the layout;
 - `infrastructure/compose.yaml` runs the default test/audit gates in an
-  isolated container;
-- `damn-vulnerable-rust.tar.gz` is kept as a legacy provenance artifact.
+  isolated container.
 
 Main entry points:
 
@@ -84,11 +84,8 @@ Documentation:
 - `dvra-2/docs/verification.md` — local and Docker/Miri gates;
 - `dvra-2/docs/instructor-guide.md` — instructor-facing workflow.
 
-Heavy Docker/Miri gates have been run through:
-
-```sh
-ssh gordey@85.142.100.8
-```
+Heavy Docker/Miri gates should be run in a disposable environment with Docker
+Compose available.
 
 ## Implementation 3
 
@@ -111,7 +108,9 @@ cd dvra-3
 ../tools/dvra-docker dvra-3 config
 ```
 
-`dvra-3/dvra-3.zip` is kept as a provenance artifact.
+Import archives and generated learner bundles are intentionally ignored by git;
+the published repository contains the source, documentation, scenarios, and
+Docker workflows.
 
 ## Shared contract
 
