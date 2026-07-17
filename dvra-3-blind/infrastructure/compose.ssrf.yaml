@@ -1,0 +1,7 @@
+services:
+  dvra:
+    environment:
+      DVRA_SSRF_LAB_MODE: enabled
+      DVRA_ACK_INSECURE: I_UNDERSTAND
+    depends_on:
+      - metadata

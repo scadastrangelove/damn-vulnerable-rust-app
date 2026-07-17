@@ -10,6 +10,7 @@ Usage:
   tools/dvra-docker dvra-1 COMMAND
   tools/dvra-docker dvra-2 COMMAND
   tools/dvra-docker dvra-3 COMMAND
+  tools/dvra-docker dvra-3-blind COMMAND
 
 DVRA-1 commands:
   config        Validate Compose config.
@@ -37,6 +38,15 @@ DVRA-3 commands:
   ssrf-up       Start the isolated SSRF lab.
   ssrf-down     Stop the isolated SSRF lab.
   ssrf-logs     Show recent SSRF lab logs.
+
+DVRA-3-BLIND commands (generated no-hints variant; same shape as DVRA-3):
+  config        Validate Compose config.
+  build         Build runtime images.
+  up            Start the API on 127.0.0.1:3000.
+  down          Stop containers and remove orphans.
+  ssrf-config   Validate the SSRF profile config.
+  ssrf-up       Start the isolated SSRF lab.
+  ssrf-down     Stop the isolated SSRF lab.
 EOF
 }
 
@@ -137,6 +147,20 @@ dvra3() {
   esac
 }
 
+dvra3blind() {
+  cd "$ROOT/dvra-3-blind"
+  case "${1:-}" in
+    config)      compose -f infrastructure/compose.yaml config ;;
+    build)       compose -f infrastructure/compose.yaml build dvra ;;
+    up)          compose -f infrastructure/compose.yaml up --build dvra ;;
+    down)        compose -f infrastructure/compose.yaml down --remove-orphans ;;
+    ssrf-config) compose -f infrastructure/compose.yaml -f infrastructure/compose.ssrf.yaml --profile ssrf-lab config ;;
+    ssrf-up)     compose -f infrastructure/compose.yaml -f infrastructure/compose.ssrf.yaml --profile ssrf-lab up --build --detach ;;
+    ssrf-down)   compose -f infrastructure/compose.yaml -f infrastructure/compose.ssrf.yaml --profile ssrf-lab down --remove-orphans ;;
+    *)           usage >&2; exit 2 ;;
+  esac
+}
+
 case "${1:-}" in
   list)
     usage
@@ -152,6 +176,10 @@ case "${1:-}" in
   dvra-3)
     shift
     dvra3 "${1:-}"
+    ;;
+  dvra-3-blind)
+    shift
+    dvra3blind "${1:-}"
     ;;
   -h|--help|help|"")
     usage

@@ -21,3 +21,14 @@ can be evaluated in two modes:
 For classroom challenge use, distribute a branch or archive that omits
 `instructor-oracle/`. For benchmark publication, keep the oracles visible so
 results can be reproduced and scored.
+
+## Blind variant
+
+`dvra-3-blind/` is a stronger form of challenge mode: beyond omitting the oracle,
+it also removes the *in-source* self-documentation — the `*_vulnerable`/`*_fixed`
+naming, paired comparison routes, exploit-demonstrating `#[cfg(test)]` modules,
+and `// DVRA-NNN` comments — so a tool must find the bugs from behavior alone. It
+is generated from `dvra-3` by `tools/make-blind/make_blind.py` (reproducible:
+`diff -qr` against a fresh regeneration is empty). Score it against
+`dvra-3/instructor-oracle/scenarios.yaml`; the neutral→original identifier
+mapping is the `RENAME` table in the generator.

@@ -1,0 +1,60 @@
+name: dvra-3-blind
+services:
+  dvra:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile
+    environment:
+      RUST_LOG: dvra=info
+      DVRA_CONFIG: /app/config/dvra.toml
+      # Dangerous routes remain blocked unless an explicit lab override sets
+      # both acknowledgement variables.
+    ports:
+      - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 1.0
+    networks:
+      - ingress
+      - lab
+
+  metadata:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile
+    entrypoint:
+      - /usr/local/bin/dvra-metadata-service
+    environment:
+      RUST_LOG: dvra_metadata_service=info
+      DVRA_METADATA_BIND: 0.0.0.0:8081
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=8m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 64m
+    cpus: 0.25
+    expose:
+      - "8081"
+    profiles:
+      - ssrf-lab
+    networks:
+      - lab
+
+networks:
+  ingress:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
+  lab:
+    internal: true
