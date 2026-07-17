@@ -32,6 +32,7 @@ RENAME = {
     "run_vulnerable": "run_hook",                    # config: shell injection
     "unreachable_legacy_export": "legacy_export",    # config: unreachable shell export
     "fetch_vulnerable": "fetch_url",                 # fetch: SSRF
+    "vulnerable_client": "http_client",              # fetch: active client field
     "RacyCounter": "SharedCounter",                  # unsafe-cache: false Sync
     "PanicCell": "SlotCell",                         # unsafe-cache: panic-safety double drop
     "get_artifact_vulnerable": "handle_get_artifact",   # app handlers wired to the above
@@ -207,6 +208,74 @@ def transform_rs(text: str, siblings: set[str]) -> str:
                    if not (IS_LINE_COMMENT.match(l) and ANSWER_COMMENT.search(l)))
     for a, b in GATE_STRINGS.items():                            # 6. neutralize gates
         text = text.replace(a, b)
+    text = cleanup_fetch_single_path(text)                        # 7. remove fixed-side fetch remnants
+    return text
+
+
+def remove_impl(src: str, name: str) -> str:
+    m = re.search(r"\nimpl\s+" + re.escape(name) + r"\s*\{", src)
+    if not m:
+        return src
+    end = _match(src, "{", "}", m.end() - 1)
+    while end < len(src) and src[end] in " \n":
+        end += 1
+    return src[:m.start()] + "\n" + src[end:]
+
+
+def cleanup_fetch_single_path(text: str) -> str:
+    if "pub async fn fetch_url" not in text or "pub struct Fetcher" not in text:
+        return text
+
+    text = text.replace("use std::{collections::HashSet, time::Duration};",
+                        "use std::time::Duration;")
+    text = text.replace("use reqwest::{Client, redirect::Policy};",
+                        "use reqwest::Client;")
+    text = text.replace("use url::Url;\n", "")
+    text = text.replace(
+        "pub struct Fetcher {\n"
+        "    http_client: Client,\n"
+        "    fixed_client: Client,\n"
+        "    policy: EgressPolicy,\n"
+        "    max_response_bytes: usize,\n"
+        "}",
+        "pub struct Fetcher {\n"
+        "    http_client: Client,\n"
+        "}",
+    )
+    text = re.sub(
+        r"(?m)^        allowed_origins: &\[String\],$",
+        "        _allowed_origins: &[String],",
+        text,
+    )
+    text = re.sub(
+        r"\n        let fixed_client = Client::builder\(\)\n"
+        r"            \.timeout\(timeout\)\n"
+        r"            \.redirect\(Policy::none\(\)\)\n"
+        r"            \.build\(\)\?;\n",
+        "\n",
+        text,
+    )
+    text = text.replace(
+        "        Ok(Self {\n"
+        "            http_client,\n"
+        "            fixed_client,\n"
+        "            policy: EgressPolicy::new(allowed_origins)?,\n"
+        "            max_response_bytes,\n"
+        "        })",
+        "        Ok(Self { http_client })",
+    )
+    text = re.sub(
+        r"\n#\[derive\(Debug, Clone\)\]\npub struct EgressPolicy \{\n"
+        r"    allowed_origins: HashSet<String>,\n\}\n",
+        "\n",
+        text,
+    )
+    text = remove_impl(text, "EgressPolicy")
+    text, _ = remove_fn(text, "canonical_configured_origin")
+    text = text.replace(
+        "    /// policy, follows redirects, and buffers the complete response.\n",
+        "    /// Fetches a URL and returns the final status, URL, and body.\n",
+    )
     return text
 
 
